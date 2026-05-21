@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+
+{% block body %}
+<div class="ob-wrap">
+
+  <div class="ob-shell">
+
+    <div class="ob-logo">
+      <svg width="32" height="36" viewBox="0 0 40 46" fill="none">
+        <path d="M20 2L37 11.5V30.5L20 40L3 30.5V11.5L20 2Z" stroke="#00d4aa" stroke-width="2" fill="rgba(0,212,170,0.07)"/>
+        <path d="M20 10L30 15.8V27.2L20 33L10 27.2V15.8L20 10Z" fill="rgba(0,212,170,0.18)" stroke="#00d4aa" stroke-width="1"/>
+      </svg>
+      <div>
+        <div class="ob-logo-name">Hex<span>Block</span></div>
+        <div class="ob-logo-sub">First-time setup</div>
+      </div>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="ob-steps" id="ob-steps">
+      <div class="ob-step active" id="si-1"><div class="ob-step-num">1</div><div class="ob-step-label">Account</div><div class="ob-step-line"></div></div>
+      <div class="ob-step" id="si-2"><div class="ob-step-num">2</div><div class="ob-step-label">Network</div><div class="ob-step-line"></div></div>
+      <div class="ob-step" id="si-3"><div class="ob-step-num">3</div><div class="ob-step-label">Blocklists</div><div class="ob-step-line"></div></div>
+      <div class="ob-step" id="si-4"><div class="ob-step-num">4</div><div class="ob-step-label">VPN</div><div class="ob-step-line"></div></div>
+      <div class="ob-step" id="si-5"><div class="ob-step-num">5</div><div class="ob-step-label">Done</div></div>
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-err">
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/onboard" id="ob-form">
+      <div class="ob-card">
+
+        <!-- Step 1: Account -->
+        <div class="ob-content active" id="ob-1">
+          <div class="ob-title">Create your account</div>
+          <div class="ob-sub">This is the only account for your HexBlock installation. There is no password reset without direct server access — keep these credentials safe.</div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" type="text" name="username" id="ob-username" placeholder="admin" autocomplete="off" required>
+            <div class="form-err" id="err-username"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" name="password" id="ob-password" placeholder="Minimum 12 characters" autocomplete="new-password" oninput="checkStrength(this.value)" required>
+              <button type="button" class="pw-eye" onclick="togglePw('ob-password',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="strength-wrap">
+              <div class="strength-bar"><div class="strength-fill" id="strength-fill" style="width:0%"></div></div>
+              <div class="strength-lbl" id="strength-lbl">Enter a password</div>
+            </div>
+            <div class="form-err" id="err-password"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm password</label>
+            <div class="pw-wrap">
+              <input class="form-input" type="password" name="confirm_password" id="ob-confirm" placeholder="Repeat password" autocomplete="new-password" required>
+              <button type="button" class="pw-eye" onclick="togglePw('ob-confirm',this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="form-err" id="err-confirm"></div>
+          </div>
+          <div class="ob-actions">
+            <button type="button" class="btn btn-primary" onclick="obNext(1)">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Network -->
+        <div class="ob-content" id="ob-2">
+          <div class="ob-title">Network setup</div>
+          <div class="ob-sub">Configure how HexBlock connects to the internet and how devices will reach it.</div>
+          <div class="form-group">
+            <label class="form-label">Hostname</label>
+            <input class="form-input" type="text" name="hostname" id="ob-hostname" value="hexblock.local">
+            <div class="form-hint">How devices will reach your HexBlock instance</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Upstream DNS</label>
+            <select class="form-input" name="upstream_dns" id="ob-dns">
+              <option value="1.1.1.1">Cloudflare (1.1.1.1) — fast, privacy-focused</option>
+              <option value="9.9.9.9">Quad9 (9.9.9.9) — security-focused</option>
+              <option value="8.8.8.8">Google (8.8.8.8) — widely used</option>
+              <option value="custom">Custom</option>
+            </select>
+            <div class="form-hint">Queries that pass the blocklist are forwarded here</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timezone</label>
+            <select class="form-input" name="timezone" id="ob-tz">
+              <option>Europe/London</option>
+              <option>Europe/Dublin</option>
+              <option>Europe/Paris</option>
+              <option>Europe/Berlin</option>
+              <option>America/New_York</option>
+              <option>America/Los_Angeles</option>
+              <option>America/Chicago</option>
+              <option>Australia/Sydney</option>
+              <option>UTC</option>
+            </select>
+          </div>
+          <div class="ob-actions">
+            <button type="button" class="btn btn-ghost" onclick="obBack(2)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="obNext(2)">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Blocklists -->
+        <div class="ob-content" id="ob-3">
+          <div class="ob-title">Choose blocklists</div>
+          <div class="ob-sub">Select which categories to block at setup. Recommended lists are pre-selected. You can add more custom lists from the dashboard at any time.</div>
+          <div class="preset-list">
+            <label class="preset-check checked">
+              <input type="checkbox" name="preset_lists" value="ads" checked>
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Ads — StevenBlack Hosts</div>
+                <div class="pcheck-meta">186k domains</div>
+              </div>
+              <div class="pcheck-rec">Recommended</div>
+            </label>
+            <label class="preset-check checked">
+              <input type="checkbox" name="preset_lists" value="trackers" checked>
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Trackers — OISD Basic</div>
+                <div class="pcheck-meta">117k domains</div>
+              </div>
+              <div class="pcheck-rec">Recommended</div>
+            </label>
+            <label class="preset-check checked">
+              <input type="checkbox" name="preset_lists" value="malware" checked>
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Malware — Phishing Army</div>
+                <div class="pcheck-meta">22k domains</div>
+              </div>
+              <div class="pcheck-rec">Recommended</div>
+            </label>
+            <label class="preset-check">
+              <input type="checkbox" name="preset_lists" value="social">
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Social Media — EasyList Social</div>
+                <div class="pcheck-meta">9k domains</div>
+              </div>
+            </label>
+            <label class="preset-check">
+              <input type="checkbox" name="preset_lists" value="telemetry">
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Telemetry — WindowsSpyBlocker</div>
+                <div class="pcheck-meta">240 domains</div>
+              </div>
+            </label>
+            <label class="preset-check">
+              <input type="checkbox" name="preset_lists" value="adult">
+              <div class="pcheck-box"></div>
+              <div class="pcheck-body">
+                <div class="pcheck-name">Adult Content</div>
+                <div class="pcheck-meta">210k domains</div>
+              </div>
+            </label>
+          </div>
+          <div class="ob-actions">
+            <button type="button" class="btn btn-ghost" onclick="obBack(3)">Back</button>
+            <button type="button" class="btn btn-primary" onclick="obNext(3)">Continue</button>
+          </div>
+        </div>
+
+        <!-- Step 4: VPN -->
+        <div class="ob-content" id="ob-4">
+          <div class="ob-title">VPN setup</div>
+          <div class="ob-sub">HexBlock uses WireGuard to encrypt all traffic from your devices. How would you like to set it up?</div>
+          <div class="vpn-opts">
+            <div class="vpn-opt selected" onclick="selectVpn(this,'auto')">
+              <input type="radio" name="vpn_mode" value="auto" checked style="display:none">
+              <div class="vpn-opt-name">Auto setup</div>
+              <div class="vpn-opt-desc">HexBlock generates keys automatically. Best for most users.</div>
+            </div>
+            <div class="vpn-opt" onclick="selectVpn(this,'manual')">
+              <input type="radio" name="vpn_mode" value="manual" style="display:none">
+              <div class="vpn-opt-name">Manual</div>
+              <div class="vpn-opt-desc">Provide your own WireGuard keys. For advanced users.</div>
+            </div>
+            <div class="vpn-opt" onclick="selectVpn(this,'dns')">
+              <input type="radio" name="vpn_mode" value="dns" style="display:none">
+              <div class="vpn-opt-name">DNS only</div>
+              <div class="vpn-opt-desc">Block ads via DNS without a VPN tunnel. Traffic is not encrypted.</div>
+            </div>
+            <div class="vpn-opt" onclick="selectVpn(this,'skip')">
+              <input type="radio" name="vpn_mode" value="skip" style="display:none">
+              <div class="vpn-opt-name">Skip for now</div>
+              <div class="vpn-opt-desc">Configure VPN later from the dashboard.</div>
+            </div>
+          </div>
+          <div class="ob-actions">
+            <button type="button" class="btn btn-ghost" onclick="obBack(4)">Back</button>
+            <button type="submit" class="btn btn-primary">Finish setup</button>
+          </div>
+        </div>
+
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let obStep = 1;
+
+function obNext(step) {
+  if (step === 1) {
+    const u = document.getElementById('ob-username').value.trim();
+    const p = document.getElementById('ob-password').value;
+    const c = document.getElementById('ob-confirm').value;
+    let ok = true;
+    if (u.length < 3) { showErr('err-username', 'Username must be at least 3 characters'); ok = false; } else clearErr('err-username');
+    if (p.length < 12) { showErr('err-password', 'Password must be at least 12 characters'); ok = false; } else clearErr('err-password');
+    if (p !== c) { showErr('err-confirm', 'Passwords do not match'); ok = false; } else clearErr('err-confirm');
+    if (!ok) return;
+  }
+  goStep(step + 1);
+}
+function obBack(step) { goStep(step - 1); }
+function goStep(n) {
+  document.querySelectorAll('.ob-content').forEach(e => e.classList.remove('active'));
+  document.getElementById('ob-' + n).classList.add('active');
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById('si-' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  }
+  obStep = n;
+}
+function showErr(id, msg) { const e = document.getElementById(id); e.textContent = msg; e.style.display = 'block'; }
+function clearErr(id) { const e = document.getElementById(id); e.textContent = ''; e.style.display = 'none'; }
+function selectVpn(el) {
+  document.querySelectorAll('.vpn-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input[type=radio]').checked = true;
+}
+function checkStrength(p) {
+  let s = 0;
+  if (p.length >= 8) s++;
+  if (p.length >= 12) s++;
+  if (/[A-Z]/.test(p)) s++;
+  if (/[0-9]/.test(p)) s++;
+  if (/[^A-Za-z0-9]/.test(p)) s++;
+  const pct = (s / 5) * 100;
+  const colours = ['#e8365d','#e8365d','#e8a236','#e8a236','#00d4aa','#00d4aa'];
+  const labels  = ['Too short','Weak','Fair','Good','Strong','Very strong'];
+  document.getElementById('strength-fill').style.cssText = `width:${pct}%;background:${colours[s]}`;
+  document.getElementById('strength-lbl').textContent = labels[s];
+}
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.style.color = inp.type === 'text' ? 'var(--accent)' : 'var(--muted)';
+}
+// Checkbox style sync
+document.querySelectorAll('.preset-check input').forEach(inp => {
+  inp.addEventListener('change', function() {
+    this.closest('.preset-check').classList.toggle('checked', this.checked);
+  });
+});
+</script>
+{% endblock %}

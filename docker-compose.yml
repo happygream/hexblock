@@ -1,0 +1,121 @@
+version: "3.9"
+
+services:
+
+  # ── Main application ──────────────────────────────────────
+  # No ports are exposed here by default.
+  # The setup script writes docker-compose.override.yml which adds
+  # a host port binding only for HTTP-only (local network) deployments.
+  # Proxy deployments (Traefik, Caddy, Nginx, Cloudflare Tunnel) reach
+  # HexBlock on the internal Docker network — no host port needed.
+  hexblock:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: hexblock
+    restart: unless-stopped
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./data/db:/data/db
+      - ./data/blocklists:/data/blocklists
+      - ./data/logs:/data/logs
+      - ./wireguard:/etc/wireguard:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dnsmasq_d:/etc/dnsmasq.d
+    environment:
+      - HEXBLOCK_ENV=production
+      - DB_PATH=/data/db/hexblock.db
+      - BLOCKLIST_DIR=/data/blocklists
+      - LOG_DIR=/data/logs
+    env_file:
+      - path: .env
+        required: false
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - dns
+    networks:
+      - hexblock-net
+
+  # ── DNS filtering ─────────────────────────────────────────
+  # Port 53 is intentionally bound on all interfaces (0.0.0.0) so
+  # every device on your network can use HexBlock as its DNS server.
+  # dnsmasq.d is a named volume shared with the hexblock service so
+  # the app can write blocklist and local host files that dnsmasq
+  # picks up on reload without a container restart.
+  dns:
+    build:
+      context: ./dns
+      dockerfile: Dockerfile
+    container_name: hexblock-dns
+    restart: unless-stopped
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    healthcheck:
+      test: ["CMD", "nslookup", "health.check", "127.0.0.1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./dns/dnsmasq.conf:/etc/dnsmasq.conf:ro
+      - dnsmasq_d:/etc/dnsmasq.d
+      - ./data/blocklists:/data/blocklists:ro
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - hexblock-net
+
+  # ── WireGuard VPN ─────────────────────────────────────────
+  # Port 51820 UDP must be reachable from outside for VPN clients.
+  # If you are not using the VPN, the setup script disables this
+  # service via a Docker Compose profile so it does not start.
+  wireguard:
+    image: linuxserver/wireguard:latest
+    container_name: hexblock-wireguard
+    restart: unless-stopped
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - ./wireguard:/config
+      - /lib/modules:/lib/modules:ro
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - SERVERURL=auto
+      - SERVERPORT=51820
+      - PEERS=0
+      - PEERDNS=hexblock-dns
+      - INTERNAL_SUBNET=10.13.13.0
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+    networks:
+      - hexblock-net
+
+volumes:
+  # Shared between dns and hexblock containers.
+  # The hexblock app writes blocklist and host files here.
+  # dnsmasq reads them and reloads on SIGHUP without a restart.
+  dnsmasq_d:
+
+networks:
+  hexblock-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

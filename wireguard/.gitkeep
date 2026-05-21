@@ -1,0 +1,3 @@
+# WireGuard configuration is generated on first run by the HexBlock app.
+# Do not commit any .conf or key files in this directory.
+# They are excluded by .gitignore.

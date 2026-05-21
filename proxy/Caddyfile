@@ -1,0 +1,41 @@
+# HexBlock — Caddy reverse proxy configuration
+#
+# Caddy automatically obtains and renews SSL certificates.
+# Place this content in your Caddyfile (usually /etc/caddy/Caddyfile)
+# then: sudo systemctl reload caddy
+#
+# .env settings required:
+#   TRUST_PROXY=1
+#   ALLOWED_HOSTS=hexblock.example.com
+
+hexblock.example.com {
+    # Caddy handles SSL automatically — no certificate config needed
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Frame-Options DENY
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        -Server
+    }
+
+    reverse_proxy localhost:8080 {
+        header_up Host              {host}
+        header_up X-Real-IP         {remote_host}
+        header_up X-Forwarded-For   {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}
+
+
+# ── Sub-path deployment (optional) ───────────────────────────
+# Also set ROOT_PATH=/hexblock in .env
+#
+# example.com {
+#     handle_path /hexblock/* {
+#         reverse_proxy localhost:8080 {
+#             header_up X-Forwarded-Prefix /hexblock
+#         }
+#     }
+# }

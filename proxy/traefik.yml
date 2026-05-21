@@ -1,0 +1,65 @@
+# HexBlock — Traefik reverse proxy configuration
+#
+# If you are already running Traefik, add this to your
+# docker-compose.yml labels section on the hexblock service,
+# or use this as a standalone dynamic config file.
+#
+# .env settings required:
+#   TRUST_PROXY=1
+#   ALLOWED_HOSTS=hexblock.example.com
+
+# ── Option A: docker-compose.yml labels ──────────────────────
+# Add these labels to the hexblock service in docker-compose.yml:
+#
+# labels:
+#   - "traefik.enable=true"
+#   - "traefik.http.routers.hexblock.rule=Host(`hexblock.example.com`)"
+#   - "traefik.http.routers.hexblock.entrypoints=websecure"
+#   - "traefik.http.routers.hexblock.tls.certresolver=letsencrypt"
+#   - "traefik.http.services.hexblock.loadbalancer.server.port=8080"
+#   - "traefik.http.middlewares.hexblock-headers.headers.stsSeconds=63072000"
+#   - "traefik.http.middlewares.hexblock-headers.headers.stsIncludeSubdomains=true"
+#   - "traefik.http.middlewares.hexblock-headers.headers.frameDeny=true"
+#   - "traefik.http.middlewares.hexblock-headers.headers.contentTypeNosniff=true"
+#   - "traefik.http.routers.hexblock.middlewares=hexblock-headers"
+
+
+# ── Option B: Standalone dynamic config file ─────────────────
+# Place at /etc/traefik/dynamic/hexblock.yml
+
+http:
+  routers:
+    hexblock:
+      rule: "Host(`hexblock.example.com`)"
+      entryPoints:
+        - websecure
+      service: hexblock
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - hexblock-headers
+        - hexblock-https-redirect
+
+  middlewares:
+    hexblock-https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    hexblock-headers:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        forceSTSHeader: true
+        frameDeny: true
+        contentTypeNosniff: true
+        referrerPolicy: "no-referrer"
+        customResponseHeaders:
+          Server: ""
+
+  services:
+    hexblock:
+      loadBalancer:
+        servers:
+          - url: "http://hexblock:8080"
+        passHostHeader: true

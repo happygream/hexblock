@@ -1,0 +1,35 @@
+# Environment and secrets
+.env
+*.env
+
+# Runtime data — never commit
+data/
+wireguard/*.conf
+wireguard/peer_*/
+wireguard/server_*/
+
+# Generated proxy configs
+proxy/*.generated.*
+proxy/cloudflare-tunnel.setup.md
+
+# Generated compose override
+docker-compose.override.yml
+
+# Network backup files created by setup.sh
+network-backup-*.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+.env
