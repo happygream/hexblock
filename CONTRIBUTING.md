@@ -11,7 +11,7 @@ writing code. This prevents wasted effort on changes that will not be merged.
 ## Development setup
 
 ```bash
-git clone https://github.com/hexblock/hexblock
+git clone https://github.com/happygream/hexblock
 cd hexblock
 
 # Copy the example env
@@ -49,6 +49,26 @@ ruff check app/
 black app/
 shellcheck scripts/*.sh
 ```
+
+## Adding or updating translations
+
+Translation strings live in `app/static/js/i18n.js`. The file contains a
+`TRANSLATIONS` object with one entry per supported language.
+
+To add a new language:
+
+1. Add a new entry to `TRANSLATIONS` using an existing language as a template
+2. Translate all ~90 keys — do not leave any as English unless the term has
+   no translation (e.g. WireGuard, dnsmasq)
+3. Add the locale code to the `SUPPORTED` array near the top of the file
+4. Add the language name to `LANGUAGE_NAMES`
+
+To fix an incorrect translation, edit the relevant string in the correct
+language object in `TRANSLATIONS`. Missing keys fall back to English
+automatically so a partial translation will not break the UI.
+
+Technical terms that should not be translated: WireGuard, dnsmasq, Docker,
+TOTP, DNS, VPN, HTTPS, SHA-256, QR code.
 
 ## Pull request checklist
 

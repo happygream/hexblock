@@ -12,6 +12,7 @@
 </head>
 <body>
 {% block body %}{% endblock %}
+<script src="{{ request.app.url_path_for('static', path='js/i18n.js') }}"></script>
 <script src="{{ request.app.url_path_for('static', path='js/hexblock.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>

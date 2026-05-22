@@ -7,6 +7,32 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.1.0] — 2026-05-22
+
+### Added
+
+- Internationalisation — dashboard available in 10 languages: English,
+  French, German, Spanish, Italian, Portuguese, Dutch, Polish, Japanese,
+  and Chinese
+- Language auto-detection from browser `Accept-Language` header on first visit
+- Language picker in the dashboard topbar and in Settings
+- Language preference saved per-user in the database — syncs across devices
+- `data-i18n` attributes on all translatable elements — language switches
+  without a page reload
+- `language` field added to the settings API `PATCH /api/v1/settings`
+- Login and onboarding pages respect browser language preference
+
+### Changed
+
+- `dashboard.js` — all hardcoded user-facing strings replaced with `_t()`
+  calls via the i18n system
+- `SettingsUpdate` schema — `language` field added (`Optional[str]`)
+- `base.html` — `i18n.js` loaded before `dashboard.js`
+- Sidebar nav labels wrapped in `<span data-i18n="...">` elements
+- Language picker rendered into the topbar via `buildLanguagePicker()`
+
+---
+
 ## [1.0.0] — 2026-05-20
 
 Initial release.

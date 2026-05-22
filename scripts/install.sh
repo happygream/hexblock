@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-REPO="https://github.com/hexblock/hexblock"
+REPO="https://github.com/happygream/hexblock"
 INSTALL_DIR="/opt/hexblock"
 
 RED='\033[0;31m'

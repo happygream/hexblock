@@ -5,7 +5,7 @@ Items move to the changelog when they ship.
 
 ---
 
-## v1.1
+## v1.2
 
 **Per-device blocklist groups**
 Different devices get different rules. Block social media for the kids'
@@ -24,13 +24,17 @@ even after HexBlock filters them.
 Force safe search on Google, Bing, YouTube, and DuckDuckGo by returning
 the safe search CNAME records instead of the real ones.
 
+**TOTP two-factor authentication**
+TOTP is partially implemented. This release completes the setup flow —
+QR code generation, verification on login, and backup codes.
+
 ---
 
-## v1.2
+## v1.3
 
 **HexBlock Shield extension — stable release**
-Chrome Web Store submission. Firefox Android submission.
-Compiled EasyList and EasyPrivacy rule sets bundled with the extension.
+Firefox submission. Compiled EasyList and EasyPrivacy rule sets bundled
+with the extension. Chrome Web Store listing is already live.
 
 **Mobile companion app**
 iOS and Android app for managing the WireGuard connection and viewing
@@ -41,7 +45,7 @@ Export the query log as CSV or JSON for analysis in external tools.
 
 ---
 
-## v1.3
+## v1.4
 
 **Multi-user support**
 Additional accounts with read-only access for household members to view

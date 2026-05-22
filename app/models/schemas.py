@@ -139,6 +139,7 @@ class SettingsUpdate(BaseModel):
     safe_search:     Optional[bool] = None
     dns_over_https:  Optional[bool] = None
     session_timeout: Optional[int] = None
+    language:        Optional[str] = None  # i18n locale code e.g. 'en', 'fr', 'de'
 
 
 # ── Stats ─────────────────────────────────────────────────────

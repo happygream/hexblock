@@ -9,7 +9,7 @@ Only the latest release receives security fixes.
 Do not open a public GitHub issue for security vulnerabilities.
 
 Open a GitHub issue with the title "Security" and minimal detail, then
-contact the maintainer directly. Include:
+contact the maintainer directly at michalemccarthy@googlemail.com. Include:
 
 - A description of the vulnerability
 - Steps to reproduce

@@ -412,3 +412,26 @@ html, body {
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .bl-page-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Language picker ────────────────────────────────────── */
+.lang-picker {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  background: var(--s2);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234a6080' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 22px;
+  min-width: 90px;
+}
+.lang-picker:hover,
+.lang-picker:focus { border-color: var(--accent); }

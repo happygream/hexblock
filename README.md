@@ -41,7 +41,7 @@ DNS at the server, or scanning a QR code to join the VPN.
 Clone the repository and run the setup script:
 
 ```bash
-git clone https://github.com/hexblock/hexblock /opt/hexblock
+git clone https://github.com/happygream/hexblock /opt/hexblock
 cd /opt/hexblock
 sudo bash scripts/setup.sh
 ```
@@ -229,6 +229,7 @@ hexblock/
       css/hexblock.css
       js/dashboard.js
       js/hexblock.js
+      js/i18n.js          Internationalisation — 10 languages, ~90 keys each
     templates/
       base.html
       onboard.html
@@ -266,6 +267,35 @@ hexblock/
 | VPN | WireGuard |
 | Packaging | Docker Compose |
 | Frontend | Vanilla JS |
+| i18n | Custom JS i18n system |
+
+---
+
+## Languages
+
+The dashboard is available in 10 languages. The language is auto-detected
+from the browser on first visit and can be changed in Settings.
+
+| Code | Language |
+|---|---|
+| `en` | English |
+| `fr` | Français |
+| `de` | Deutsch |
+| `es` | Español |
+| `it` | Italiano |
+| `pt` | Português |
+| `nl` | Nederlands |
+| `pl` | Polski |
+| `ja` | 日本語 |
+| `zh` | 中文 |
+
+Language preference is saved per-user in the database and syncs across
+devices. The login and onboarding pages use browser language detection.
+
+To add a new language, add a translation object to `app/static/js/i18n.js`
+following the existing structure and add the locale code to the `SUPPORTED`
+array at the top of the file. All ~90 keys must be present — missing keys
+fall back to English.
 
 ---
 
@@ -283,7 +313,7 @@ back to the dashboard.
 
 It also works standalone without a gateway, in the same way as uBlock Origin.
 
-The extension repository is at `github.com/hexblock/hexblock-shield`.
+The extension repository is at `github.com/happygream/hexblock-shield`.
 
 ---
 

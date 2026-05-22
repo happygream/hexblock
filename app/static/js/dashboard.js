@@ -9,16 +9,19 @@ const HB = {
   pollTimer: null,
 };
 
-const PAGE_TITLES = {
-  dashboard: 'Dashboard',
-  querylog:  'Query Log',
-  blocklists:'Blocklists',
-  rules:     'Custom Rules',
-  vpn:       'VPN / WireGuard',
-  devices:   'Devices',
-  security:  'Security',
-  settings:  'Settings',
-};
+function PAGE_TITLES(id) {
+  const map = {
+    dashboard:  'nav_dashboard',
+    querylog:   'nav_query_log',
+    blocklists: 'nav_blocklists',
+    rules:      'nav_rules',
+    vpn:        'nav_vpn',
+    devices:    'nav_devices',
+    security:   'nav_security',
+    settings:   'nav_settings',
+  };
+  return (window.HBI18n ? window.HBI18n.t(map[id] || id) : id);
+}
 
 // ── Boot ──────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,9 +45,9 @@ function goPage(id) {
   document.querySelectorAll('.sb-item').forEach(el => {
     el.classList.toggle('active', el.dataset.page === id);
   });
-  document.getElementById('topbar-title').textContent = PAGE_TITLES[id] || id;
+  document.getElementById('topbar-title').textContent = PAGE_TITLES(id);
   const content = document.getElementById('content');
-  content.innerHTML = '<div style="opacity:0.3;font-family:var(--mono);font-size:11px;padding:20px;">Loading...</div>';
+  content.innerHTML = `<div style="opacity:0.3;font-family:var(--mono);font-size:11px;padding:20px;">${_t('loading')}</div>`;
   renderPage(id);
 }
 
@@ -71,6 +74,10 @@ async function loadSettings() {
     const u = data.username || 'admin';
     document.getElementById('sb-uname').textContent    = u;
     document.getElementById('sb-avatar').textContent   = u[0].toUpperCase();
+    // Apply saved language preference from server
+    if (data.language && window.HBI18n) {
+      window.HBI18n.setLocale(data.language);
+    }
   } catch(_) {}
 }
 
@@ -178,10 +185,10 @@ async function renderDashboard() {
 
   if (vpnStatus.status === 'fulfilled') {
     const v = vpnStatus.value;
-    setText('vpn-name',   v.running ? 'Encrypted and active' : 'Tunnel not running');
-    setText('vpn-detail', v.running ? 'WireGuard — all traffic tunnelled' : 'Start VPN from the VPN page');
+    setText('vpn-name',   v.running ? _t('vpn_active') : _t('vpn_tunnel_down'));
+    setText('vpn-detail', v.running ? 'WireGuard — all traffic tunnelled' : _t('vpn_no_vpn'));
     document.getElementById('vpn-tog').classList.toggle('off', !v.running);
-    setText('vpn-lbl', v.running ? 'VPN On' : 'VPN Off');
+    setText('vpn-lbl', v.running ? 'VPN On' : _t('vpn_off'));
   }
 
   buildMiniChart('dash-chart');
@@ -208,7 +215,7 @@ async function loadLog() {
   const data = await api(`/api/v1/log?limit=100&filter=${f}`);
   document.getElementById('ql-rows').innerHTML = data.length
     ? data.map(logRow).join('')
-    : emptyState('No queries logged yet');
+    : emptyState(_t('log_empty'));
   setText('ql-count', data.length + ' entries');
   updateQlBtns();
 }
@@ -306,18 +313,18 @@ async function loadBl() {
           </div>
         </div>
       </div>`).join('')
-    : emptyState('No blocklists added yet');
+    : emptyState(_t('bl_empty'));
 }
 
 async function toggleBl(id, enabled) {
   await api(`/api/v1/blocklists/${id}?enabled=${enabled}`, {method:'PATCH'});
-  toast(enabled ? 'Blocklist enabled' : 'Blocklist disabled');
+  toast(enabled ? _t('bl_enabled_msg') : _t('bl_disabled_msg'));
   loadBl();
 }
 
 async function deleteBl(id) {
   await api(`/api/v1/blocklists/${id}`, {method:'DELETE'});
-  toast('Blocklist removed');
+  toast(_t('bl_removed_msg'));
   loadBl();
 }
 
@@ -325,14 +332,14 @@ function loadPreset(name, cat, url) {
   document.getElementById('bl-name').value = name;
   document.getElementById('bl-cat').value  = cat;
   document.getElementById('bl-url').value  = url;
-  toast('Preset loaded — click Add Blocklist');
+  toast(_t('bl_preset_loaded'));
 }
 
 async function addBlocklist() {
   const name = document.getElementById('bl-name').value.trim();
   const cat  = document.getElementById('bl-cat').value;
   const url  = document.getElementById('bl-url').value.trim();
-  if (!name) { toast('Enter a list name'); return; }
+  if (!name) { toast(_t('bl_enter_name')); return; }
 
   const fd = new FormData();
   fd.append('name', name);
@@ -375,7 +382,7 @@ function processBlFile(file) {
     document.getElementById('parse-num').textContent = doms.length >= 1000 ? Math.round(doms.length/1000) + 'k' : doms.length;
     document.getElementById('parse-result').classList.add('show');
     if (!document.getElementById('bl-name').value) document.getElementById('bl-name').value = file.name.replace(/\.[^.]+$/, '');
-    toast('Parsed ' + doms.length.toLocaleString() + ' domains from ' + file.name);
+    toast(_t('bl_parsed') + ' ' + doms.length.toLocaleString() + ' ' + _t('bl_domains_suffix') + ' — ' + file.name);
   };
   r.readAsText(file);
 }
@@ -410,7 +417,7 @@ async function loadRules() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
         </div>
       </div>`).join('')
-    : emptyState('No custom rules defined');
+    : emptyState(_t('rules_empty'));
 }
 
 async function addRule() {
@@ -419,13 +426,13 @@ async function addRule() {
   if (!domain) return;
   await api('/api/v1/rules', {method:'POST', json:{domain, rule_type:type}});
   document.getElementById('rule-domain').value = '';
-  toast('Rule added: ' + type + ' ' + domain);
+  toast(_t('rules_added') + ': ' + type + ' ' + domain);
   loadRules();
 }
 
 async function deleteRule(id) {
   await api(`/api/v1/rules/${id}`, {method:'DELETE'});
-  toast('Rule removed');
+  toast(_t('rules_removed'));
   loadRules();
 }
 
@@ -460,15 +467,15 @@ async function renderVPN() {
     </div>`);
   HB._wgConfig = null;
   const v = await api('/api/v1/vpn/status');
-  setText('vpn2-name',   v.running ? 'Encrypted and active' : 'Tunnel not running');
-  setText('vpn2-detail', v.running ? 'WireGuard — all traffic tunnelled' : 'Check docker-compose logs for details');
+  setText('vpn2-name',   v.running ? _t('vpn_active') : _t('vpn_tunnel_down'));
+  setText('vpn2-detail', v.running ? 'WireGuard — all traffic tunnelled' : _t('docker_logs_hint'));
   const badge = document.getElementById('vpn-status-badge');
-  if (badge) { badge.textContent = v.running ? 'Active' : 'Offline'; badge.className = v.running ? 'badge badge-g' : 'badge badge-r'; }
+  if (badge) { badge.textContent = v.running ? _t('active') : _t('vpn_offline'); badge.className = v.running ? 'badge badge-g' : 'badge badge-r'; }
 }
 
 async function addDevice() {
   const name = document.getElementById('new-device-name').value.trim();
-  if (!name) { toast('Enter a device name'); return; }
+  if (!name) { toast(_t('dev_enter_name')); return; }
   const data = await api('/api/v1/devices', {method:'POST', json:{name}});
   HB._wgConfig = data.config;
   const qrResult = document.getElementById('qr-result');
@@ -486,7 +493,7 @@ function downloadConfig() {
 }
 
 function toggleVpn() {
-  toast('VPN control via docker compose — see Settings');
+  toast(_t('vpn_control'));
 }
 
 // ── Devices ────────────────────────────────────────────────────
@@ -503,7 +510,7 @@ async function renderDevices() {
   const data = await api('/api/v1/devices');
   document.getElementById('all-devices').innerHTML = data.length
     ? data.map(d => devRow(d, true)).join('')
-    : emptyState('No devices added yet — add one from the VPN page');
+    : emptyState(_t('dev_empty'));
 }
 
 // ── Security ───────────────────────────────────────────────────
@@ -570,11 +577,11 @@ async function renderSecurity() {
         <span class="audit-action">${esc(a.action)}</span>
         <span class="audit-who">${esc(a.ip_address || 'system')}</span>
       </div>`).join('')
-    : emptyState('No audit entries yet');
+    : emptyState(_t('sec_audit_empty'));
 }
 
 async function toggleTotp() {
-  toast('TOTP setup — coming in next build');
+  toast(_t('sec_totp_soon'));
 }
 
 function showPwModal() {
@@ -593,18 +600,18 @@ async function submitPwChange() {
   const current = document.getElementById('pw-current')?.value || '';
   const newPw   = document.getElementById('pw-new')?.value    || '';
   const confirm = document.getElementById('pw-confirm')?.value || '';
-  if (!current || !newPw || !confirm) { toast('All fields are required'); return; }
-  if (newPw !== confirm) { toast('Passwords do not match'); return; }
-  if (newPw.length < 12) { toast('Password must be at least 12 characters'); return; }
+  if (!current || !newPw || !confirm) { toast(_t('sec_all_required')); return; }
+  if (newPw !== confirm) { toast(_t('sec_pw_mismatch')); return; }
+  if (newPw.length < 12) { toast(_t('sec_pw_short')); return; }
   try {
     await api('/api/v1/account/password', {
       method: 'POST',
       json: { current_password: current, new_password: newPw, confirm_password: confirm },
     });
-    toast('Password changed successfully');
+    toast(_t('sec_pw_changed'));
     hidePwModal();
   } catch (e) {
-    toast('Failed — check your current password');
+    toast(_t('sec_pw_failed'));
   }
 }
 
@@ -619,6 +626,19 @@ async function renderSettings() {
           <div class="sec-row"><div class="sec-label-left"><div class="sec-row-label">Log DNS queries</div><div class="sec-row-hint">Retain 7 days of query history</div></div><button class="tog" onclick="this.classList.toggle('off')"></button></div>
           <div class="sec-row"><div class="sec-label-left"><div class="sec-row-label">Safe search enforcement</div><div class="sec-row-hint">Force safe search on Google, Bing, YouTube</div></div><button class="tog off" onclick="this.classList.toggle('off')"></button></div>
           <div class="sec-row"><div class="sec-label-left"><div class="sec-row-label">DNS over HTTPS upstream</div><div class="sec-row-hint">Encrypt queries to upstream DNS</div></div><button class="tog" onclick="this.classList.toggle('off')"></button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><span class="card-title" data-i18n="set_language">Language</span></div>
+        <div class="card-body" style="padding:14px;">
+          <div class="sec-row">
+            <div class="sec-label-left">
+              <div class="sec-row-label" data-i18n="set_language">Language</div>
+              <div class="sec-row-hint">Dashboard display language</div>
+            </div>
+            <div id="lang-picker-wrap"></div>
+          </div>
         </div>
       </div>
 
@@ -652,7 +672,7 @@ async function renderSettings() {
   if (sys.trust_proxy || sys.trust_cloudflare) {
     const el = document.getElementById('proxy-status');
     if (el) {
-      el.textContent = sys.trust_cloudflare ? 'Cloudflare Tunnel' : 'On';
+      el.textContent = sys.trust_cloudflare ? _t('vpn_tunnel') : _t('enabled');
       el.className = 'badge badge-g';
     }
   }
@@ -693,9 +713,9 @@ hexblock.example.com {
 // ── Sync ──────────────────────────────────────────────────────
 async function syncLists() {
   const btn = document.getElementById('btn-sync');
-  if (btn) { btn.disabled = true; btn.textContent = 'Syncing...'; }
+  if (btn) { btn.disabled = true; btn.textContent = _t('bl_syncing'); }
   await api('/api/v1/blocklists/sync', {method:'POST'});
-  toast('Blocklists synced');
+  toast(_t('bl_synced_msg'));
   if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-3"/></svg> Sync Lists'; }
 }
 
@@ -725,7 +745,7 @@ function devRow(d, showDelete) {
 
 async function deleteDevice(id) {
   await api(`/api/v1/devices/${id}`, {method:'DELETE'});
-  toast('Device removed');
+  toast(_t('dev_removed'));
   renderDevices();
 }
 
@@ -758,6 +778,11 @@ function toast(msg) {
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── i18n shorthand ────────────────────────────────────────────
+function _t(key, vars) {
+  return window.HBI18n ? window.HBI18n.t(key, vars) : key;
 }
 
 // ── API helpers ───────────────────────────────────────────────
