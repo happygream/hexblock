@@ -7,6 +7,46 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.2.0] — 2026-05-29
+
+### Added
+
+- Real-time DNS query logging — log reader tails hexblock-dns container logs
+  via Docker SDK and writes query and block events to the database
+- Server-Sent Events (SSE) endpoint `/api/v1/stream` — dashboard live query
+  log updates instantly without polling
+- Device auto-discovery — devices are registered automatically from DNS query
+  traffic with reverse DNS hostname resolution via the router
+- In-memory event bus (`event_bus.py`) for thread-safe SSE publishing from
+  the log reader background thread
+- `docker` SDK dependency — used for container log tailing and dnsmasq reload
+
+### Changed
+
+- dnsmasq reload now uses Docker SDK `container.restart()` instead of
+  `killall -HUP dnsmasq` — fixes reload on Ubuntu where killall path differs
+- Blocklist format changed from `address=/domain/#` to `address=/domain/0.0.0.0`
+  so blocked queries are logged by dnsmasq
+- DNS health check updated to use `nslookup google.com` instead of
+  `nslookup health.check` — eliminates false unhealthy status
+- Dashboard live query log now uses SSE instead of polling — shows all
+  traffic in real time
+- Dashboard devices panel polls every 4 seconds for newly discovered devices
+- Stats polling continues every 4 seconds for queries/blocked counters
+- uvicorn reduced to 1 worker to prevent duplicate log reader threads
+- Docker group GID 108 added to hexblock container for Docker socket access
+
+### Fixed
+
+- Health check queries from 127.0.0.1 filtered from query log
+- Duplicate device entries prevented via `INSERT OR IGNORE` and unique index
+- `renderTopBlocked` undefined error crashing dashboard on load
+- Add Blocklist panel converted from fixed side column to slide-in drawer —
+  layout no longer overflows at any viewport width
+- Responsive CSS added for sidebar, content grid, and all pages at 700px
+  and 420px breakpoints
+
+
 ## [1.1.0] — 2026-05-22
 
 ### Added
