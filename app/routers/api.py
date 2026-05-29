@@ -3,9 +3,11 @@ HexBlock REST API — used by the frontend JS for live data.
 All endpoints require a valid session cookie.
 """
 
+import asyncio
+import json
 import aiosqlite
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from config import settings
 from services.auth_service import AuthService
@@ -20,6 +22,32 @@ async def require_auth(request: Request):
     token = request.cookies.get("hb_session")
     if not token or not await AuthService.validate_session(token):
         raise HTTPException(status_code=401, detail="Not authenticated")
+
+
+# ── SSE stream ───────────────────────────────────────────────
+
+@router.get("/stream")
+async def stream_events(request: Request):
+    await require_auth(request)
+    from services.event_bus import subscribe
+
+    async def event_generator():
+        yield "data: {}\n\n"  # initial ping
+        async for event in subscribe():
+            if await request.is_disconnected():
+                break
+            yield f"data: {json.dumps(event)}\n\n"
+
+
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ── Stats ─────────────────────────────────────────────────────

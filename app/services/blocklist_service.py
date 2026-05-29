@@ -194,7 +194,7 @@ class BlocklistService:
         # Write dnsmasq-format hosts file
         # Format: address=/domain.com/#  — returns NXDOMAIN
         DNSMASQ_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-        lines = [f"address=/{d}/#" for d in sorted(all_domains)]
+        lines = [f"address=/{d}/0.0.0.0\naddress=/{d}/::" for d in sorted(all_domains)]
         DNSMASQ_OUTPUT.write_text(
             "# HexBlock — generated file, do not edit manually\n"
             + "\n".join(lines)
@@ -212,11 +212,10 @@ class BlocklistService:
     @staticmethod
     def _reload_dnsmasq():
         try:
-            subprocess.run(
-                settings.dnsmasq_reload_cmd.split(),
-                capture_output=True,
-                timeout=5,
-            )
-            logger.info("dnsmasq reloaded")
+            import docker as _docker
+            client = _docker.from_env()
+            container = client.containers.get("hexblock-dns")
+            container.restart(timeout=5)
+            logger.info("dnsmasq restarted via Docker SDK")
         except Exception as e:
-            logger.warning("dnsmasq reload failed (may be expected in dev): %s", e)
+            logger.warning("dnsmasq restart failed: %s", e)

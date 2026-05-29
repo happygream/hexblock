@@ -83,6 +83,28 @@ async function loadSettings() {
 
 // ── Poll for live stats ───────────────────────────────────────
 function startPoll() {
+  // SSE for real-time log updates
+  if (HB.sse) { HB.sse.close(); HB.sse = null; }
+  HB.sse = new EventSource('/api/v1/stream');
+  HB.sse.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (!data.domain) return;
+      // Persist to in-memory log (survives re-renders)
+      if (!HB.liveLog) HB.liveLog = [];
+      HB.liveLog.unshift(data);
+      if (HB.liveLog.length > 50) HB.liveLog.pop();
+      // Update dash-log if visible
+      const el = document.getElementById('dash-log');
+      if (el) {
+        el.insertAdjacentHTML('afterbegin', logRow(data));
+        const rows = el.querySelectorAll('.qrow');
+        if (rows.length > 50) rows[rows.length - 1].remove();
+      }
+    } catch(_) {}
+  };
+  HB.sse.onerror = () => {};
+
   HB.pollTimer = setInterval(async () => {
     if (HB.page !== 'dashboard') return;
     try {
@@ -92,6 +114,15 @@ function startPoll() {
       setText('d-rate',    s.block_rate + '%');
       setText('nb-log',    fmt(s.blocked_today));
       setText('nb-bl',     s.active_lists);
+    } catch(_) {}
+    try {
+      const devs = await api('/api/v1/devices');
+      const online = devs.filter(d => d.last_seen).length;
+      setText('d-devices', devs.length);
+      setText('d-devices-sub', online + ' seen recently');
+      setText('d-devices-badge', online + ' active');
+      const el = document.getElementById('d-devices-list');
+      if (el) el.innerHTML = devs.slice(0,4).map(devRow).join('');
     } catch(_) {}
   }, 4000);
 }
@@ -143,7 +174,7 @@ async function renderDashboard() {
   // Load data in parallel
   const [stats, log, bls, devs, vpnStatus] = await Promise.allSettled([
     api('/api/v1/stats'),
-    api('/api/v1/log?limit=8'),
+    api('/api/v1/log?limit=50'),
     api('/api/v1/blocklists'),
     api('/api/v1/devices'),
     api('/api/v1/vpn/status'),
@@ -160,8 +191,9 @@ async function renderDashboard() {
     if (s.top_blocked) renderTopBlocked(s.top_blocked);
   }
 
-  if (log.status === 'fulfilled') {
-    setText('dash-log', '');
+  if (HB.liveLog && HB.liveLog.length > 0) {
+    document.getElementById('dash-log').innerHTML = HB.liveLog.slice(0,50).map(logRow).join('');
+  } else if (log.status === 'fulfilled') {
     document.getElementById('dash-log').innerHTML = log.value.map(logRow).join('');
   }
 
@@ -231,58 +263,73 @@ function updateQlBtns() {
 }
 
 // ── Blocklists ─────────────────────────────────────────────────
+function openBlDrawer() {
+  document.getElementById('bl-drawer-overlay').classList.add('open');
+  document.getElementById('bl-drawer').classList.add('open');
+}
+function closeBlDrawer() {
+  document.getElementById('bl-drawer-overlay').classList.remove('open');
+  document.getElementById('bl-drawer').classList.remove('open');
+}
+
 async function renderBlocklists() {
   setContent(`
     <div style="animation:pagein 0.2s ease both;">
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;align-items:start;">
-        <div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Blocklists</span><span class="badge badge-g" id="bl-badge">—</span></div>
-            <div class="bl-table-head"><span></span><span>Name</span><span>Domains</span><span>Category</span><span>Updated</span><span></span></div>
-            <div id="bl-table"></div>
-          </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Blocklists</span>
+          <span class="badge badge-g" id="bl-badge">—</span>
+          <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openBlDrawer()">+ Add Blocklist</button>
         </div>
-        <div class="add-panel">
-          <div class="add-panel-head">Add Blocklist</div>
-          <div class="add-panel-body">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">Name</label>
-              <input class="form-input" id="bl-name" type="text" placeholder="e.g. StevenBlack Ads">
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">Category</label>
-              <select class="form-input" id="bl-cat">
-                <option>Ads</option><option>Trackers</option><option>Malware</option>
-                <option>Social</option><option>Telemetry</option><option>Adult</option><option>Custom</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label">URL</label>
-              <input class="form-input" id="bl-url" type="url" placeholder="https://raw.githubusercontent.com/...">
-            </div>
-            <div class="or-div">or upload file</div>
-            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bl-file').click()"
-                 ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <div class="drop-lbl" id="drop-lbl">Drop .txt or hosts file</div>
-              <div class="drop-sub">or click to browse</div>
-            </div>
-            <input type="file" id="bl-file" accept=".txt,.hosts,.list" style="display:none" onchange="handleBlFile(event)">
-            <div class="parse-result" id="parse-result">
-              <div class="parse-num" id="parse-num">0</div>
-              <div class="parse-lbl">domains ready to import</div>
-            </div>
-            <div class="or-div">presets</div>
-            <div class="preset-grid">
-              <div class="preset-btn" onclick="loadPreset('StevenBlack','Ads','https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts')"><div class="preset-btn-name">StevenBlack</div><div class="preset-btn-count">186k domains</div></div>
-              <div class="preset-btn" onclick="loadPreset('OISD Basic','Trackers','https://dbl.oisd.nl/basic/')"><div class="preset-btn-name">OISD Basic</div><div class="preset-btn-count">117k domains</div></div>
-              <div class="preset-btn" onclick="loadPreset('Hagezi Pro','Trackers','https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt')"><div class="preset-btn-name">Hagezi Pro</div><div class="preset-btn-count">521k domains</div></div>
-              <div class="preset-btn" onclick="loadPreset('Phishing Army','Malware','https://phishing.army/download/phishing_army_blocklist.txt')"><div class="preset-btn-name">Phishing Army</div><div class="preset-btn-count">22k domains</div></div>
-              <div class="preset-btn" onclick="loadPreset('EasyList','Ads','https://easylist.to/easylist/easylist.txt')"><div class="preset-btn-name">EasyList</div><div class="preset-btn-count">76k domains</div></div>
-              <div class="preset-btn" onclick="loadPreset('WinSpyBlock','Telemetry','https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt')"><div class="preset-btn-name">WinSpyBlock</div><div class="preset-btn-count">240 domains</div></div>
-            </div>
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="addBlocklist()">Add Blocklist</button>
+        <div class="bl-table-head"><span></span><span>Name</span><span>Domains</span><span>Category</span><span>Updated</span><span></span></div>
+        <div id="bl-table"></div>
+      </div>
+      <div class="drawer-overlay" id="bl-drawer-overlay" onclick="closeBlDrawer()"></div>
+      <div class="drawer" id="bl-drawer">
+        <div class="drawer-head">
+          <span>Add Blocklist</span>
+          <button class="icon-btn" onclick="closeBlDrawer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Name</label>
+            <input class="form-input" id="bl-name" type="text" placeholder="e.g. StevenBlack Ads">
           </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Category</label>
+            <select class="form-input" id="bl-cat">
+              <option>Ads</option><option>Trackers</option><option>Malware</option>
+              <option>Social</option><option>Telemetry</option><option>Adult</option><option>Custom</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">URL</label>
+            <input class="form-input" id="bl-url" type="url" placeholder="https://raw.githubusercontent.com/...">
+          </div>
+          <div class="or-div">or upload file</div>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('bl-file').click()"
+               ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="drop-lbl" id="drop-lbl">Drop .txt or hosts file</div>
+            <div class="drop-sub">or click to browse</div>
+          </div>
+          <input type="file" id="bl-file" accept=".txt,.hosts,.list" style="display:none" onchange="handleBlFile(event)">
+          <div class="parse-result" id="parse-result">
+            <div class="parse-num" id="parse-num">0</div>
+            <div class="parse-lbl">domains ready to import</div>
+          </div>
+          <div class="or-div">presets</div>
+          <div class="preset-grid">
+            <div class="preset-btn" onclick="loadPreset('StevenBlack','Ads','https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts')"><div class="preset-btn-name">StevenBlack</div><div class="preset-btn-count">186k domains</div></div>
+            <div class="preset-btn" onclick="loadPreset('OISD Basic','Trackers','https://dbl.oisd.nl/basic/')"><div class="preset-btn-name">OISD Basic</div><div class="preset-btn-count">117k domains</div></div>
+            <div class="preset-btn" onclick="loadPreset('Hagezi Pro','Trackers','https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt')"><div class="preset-btn-name">Hagezi Pro</div><div class="preset-btn-count">521k domains</div></div>
+            <div class="preset-btn" onclick="loadPreset('Phishing Army','Malware','https://phishing.army/download/phishing_army_blocklist.txt')"><div class="preset-btn-name">Phishing Army</div><div class="preset-btn-count">22k domains</div></div>
+            <div class="preset-btn" onclick="loadPreset('EasyList','Ads','https://easylist.to/easylist/easylist.txt')"><div class="preset-btn-name">EasyList</div><div class="preset-btn-count">76k domains</div></div>
+            <div class="preset-btn" onclick="loadPreset('WinSpyBlock','Telemetry','https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt')"><div class="preset-btn-name">WinSpyBlock</div><div class="preset-btn-count">240 domains</div></div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="addBlocklist()">Add Blocklist</button>
         </div>
       </div>
     </div>`);
@@ -720,6 +767,17 @@ async function syncLists() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────
+function renderTopBlocked(data) {
+  const el = document.getElementById('d-top-blocked');
+  if (!el) return;
+  el.innerHTML = data.map(d =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;font-family:var(--mono);font-size:10px;">
+      <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;">${esc(d.domain)}</span>
+      <span style="color:var(--r);margin-left:8px;">${d.count}</span>
+    </div>`
+  ).join('');
+}
+
 function logRow(e) {
   return `<div class="qrow">
     <span class="qdot ${e.action==='allowed'?'a':'b'}"></span>

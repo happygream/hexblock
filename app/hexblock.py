@@ -22,6 +22,7 @@ from routers import settings as settings_router
 from routers import api
 from services.blocklist_service import BlocklistService
 from services.scheduler import start_scheduler
+from services.log_reader_service import start_log_reader
 
 logging.basicConfig(
     level=logging.INFO,
@@ -146,7 +147,11 @@ async def lifespan(app: FastAPI):
         await _load_cloudflare_ranges()
     await init_db()
     await BlocklistService.apply_all_active()
+    import asyncio as _asyncio
+    from services.event_bus import set_main_loop
+    set_main_loop(_asyncio.get_event_loop())
     start_scheduler()
+    start_log_reader()
     yield
     logger.info("HexBlock stopping")
 

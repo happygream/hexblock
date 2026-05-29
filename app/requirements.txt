@@ -12,3 +12,5 @@ schedule==1.2.1
 aiofiles==23.2.1
 pydantic==2.7.1
 pydantic-settings==2.2.1
+docker==7.1.0
+dnspython==2.6.1

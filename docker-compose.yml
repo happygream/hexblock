@@ -39,6 +39,8 @@ services:
         required: false
     security_opt:
       - no-new-privileges:true
+    group_add:
+      - "108"
     depends_on:
       - dns
     networks:
@@ -60,7 +62,7 @@ services:
       - "53:53/udp"
       - "53:53/tcp"
     healthcheck:
-      test: ["CMD", "nslookup", "health.check", "127.0.0.1"]
+      test: ["CMD", "sh", "-c", "nslookup google.com 127.0.0.1 > /dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
