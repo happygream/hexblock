@@ -28,6 +28,8 @@ services:
       - ./data/logs:/data/logs
       - ./wireguard:/etc/wireguard:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/hexblock-display:/opt/hexblock-display:ro
+      - /sys/class/thermal:/sys/class/thermal:ro
       - dnsmasq_d:/etc/dnsmasq.d
     environment:
       - HEXBLOCK_ENV=production

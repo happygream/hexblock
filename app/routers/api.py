@@ -24,6 +24,108 @@ async def require_auth(request: Request):
         raise HTTPException(status_code=401, detail="Not authenticated")
 
 
+# ── Display HTML page (no auth) ──────────────────────────────
+
+@router.get("/display-screen", include_in_schema=False)
+async def display_screen():
+    from fastapi.responses import FileResponse
+    import os
+    path = "/opt/hexblock-display/display.html"
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/html")
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse("<h1>Display file not found</h1>")
+
+
+def _get_temp() -> float | None:
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            return round(int(f.read().strip()) / 1000, 1)
+    except Exception:
+        return None
+
+
+def _get_sysinfo() -> dict:
+    info = {"cpu": None, "ram": None, "uptime": None}
+    try:
+        import psutil
+        info["cpu"] = round(psutil.cpu_percent(interval=0.1), 1)
+        info["ram"] = round(psutil.virtual_memory().percent, 1)
+        secs = int(psutil.boot_time())
+        import time
+        up = int(time.time()) - secs
+        h, m = divmod(up // 60, 60)
+        d, h = divmod(h, 24)
+        info["uptime"] = f"{d}d {h}h {m}m" if d else f"{h}h {m}m"
+    except Exception:
+        pass
+    return info
+
+
+# ── Public display endpoint (no auth) ────────────────────────
+
+@router.get("/display")
+async def display_stats(request: Request):
+    """Unauthenticated stats for the local display screen."""
+    import aiosqlite as _aiosqlite
+    async with _aiosqlite.connect(settings.db_path) as db:
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM query_log WHERE logged_at >= date('now')"
+        )
+        queries_today = (await cur.fetchone())[0]
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM query_log WHERE action = 'blocked' AND logged_at >= date('now')"
+        )
+        blocked_today = (await cur.fetchone())[0]
+        cur = await db.execute("SELECT COUNT(*) FROM devices")
+        devices_total = (await cur.fetchone())[0]
+        cur = await db.execute("SELECT COUNT(*) FROM blocklists WHERE enabled = 1")
+        active_lists = (await cur.fetchone())[0]
+        cur = await db.execute(
+            """SELECT domain, COUNT(*) as c FROM query_log
+               WHERE action = 'blocked' AND logged_at >= date('now')
+               GROUP BY domain ORDER BY c DESC LIMIT 8"""
+        )
+        top_blocked = [{"domain": r[0], "count": r[1]} for r in await cur.fetchall()]
+        cur = await db.execute("SELECT name, ip_address, last_seen FROM devices ORDER BY last_seen DESC LIMIT 6")
+        devices = [{"name": r[0], "ip_address": r[1], "last_seen": r[2]} for r in await cur.fetchall()]
+    block_rate = round((blocked_today / queries_today * 100), 1) if queries_today else 0.0
+    return {
+        "queries_today": queries_today,
+        "blocked_today": blocked_today,
+        "block_rate": block_rate,
+        "devices_total": devices_total,
+        "active_lists": active_lists,
+        "top_blocked": top_blocked,
+        "devices": devices,
+        "version": "1.2.0",
+        "temp": _get_temp(),
+        **_get_sysinfo(),
+    }
+
+
+# ── Public SSE stream (no auth) ───────────────────────────────
+
+@router.get("/display/stream")
+async def display_stream(request: Request):
+    """Unauthenticated SSE stream for the local display screen."""
+    from services.event_bus import subscribe
+    import json
+
+    async def event_generator():
+        yield "data: {}\n\n"
+        async for event in subscribe():
+            if await request.is_disconnected():
+                break
+            yield f"data: {json.dumps(event)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 # ── SSE stream ───────────────────────────────────────────────
 
 @router.get("/stream")

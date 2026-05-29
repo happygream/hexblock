@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     docker.io \
     wireguard-tools \
     iproute2 \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Python deps
