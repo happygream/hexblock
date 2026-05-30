@@ -149,7 +149,7 @@ async def lifespan(app: FastAPI):
     await BlocklistService.apply_all_active()
     import asyncio as _asyncio
     from services.event_bus import set_main_loop
-    set_main_loop(_asyncio.get_event_loop())
+    set_main_loop(_asyncio.get_running_loop())
     start_scheduler()
     start_log_reader()
     yield

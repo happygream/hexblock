@@ -44,7 +44,7 @@ async def init_db():
                 password_hash   TEXT NOT NULL,
                 totp_secret     TEXT,
                 totp_enabled    INTEGER NOT NULL DEFAULT 0,
-                created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+                created_at      TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 last_login      TEXT
             )
         """)
@@ -53,7 +53,7 @@ async def init_db():
         await db.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
                 token       TEXT PRIMARY KEY,
-                created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 expires_at  TEXT NOT NULL,
                 ip_address  TEXT
             )
@@ -64,7 +64,7 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS login_attempts (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 ip_address  TEXT NOT NULL,
-                attempted_at TEXT NOT NULL DEFAULT (datetime('now')),
+                attempted_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 success     INTEGER NOT NULL DEFAULT 0
             )
         """)
@@ -80,7 +80,7 @@ async def init_db():
                 domain_count INTEGER NOT NULL DEFAULT 0,
                 enabled     INTEGER NOT NULL DEFAULT 1,
                 last_updated TEXT,
-                created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
 
@@ -91,7 +91,7 @@ async def init_db():
                 domain      TEXT NOT NULL UNIQUE,
                 rule_type   TEXT NOT NULL CHECK (rule_type IN ('allow', 'deny')),
                 note        TEXT,
-                created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
 
@@ -104,7 +104,7 @@ async def init_db():
                 mac_address TEXT,
                 wg_public_key TEXT,
                 wg_assigned_ip TEXT,
-                created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
                 last_seen   TEXT
             )
         """)
@@ -119,7 +119,7 @@ async def init_db():
                 device_name TEXT,
                 action      TEXT NOT NULL CHECK (action IN ('allowed', 'blocked')),
                 blocklist   TEXT,
-                logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+                logged_at   TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
         await db.execute("CREATE INDEX IF NOT EXISTS idx_query_log_time ON query_log(logged_at)")
@@ -132,7 +132,7 @@ async def init_db():
                 action      TEXT NOT NULL,
                 detail      TEXT,
                 ip_address  TEXT,
-                logged_at   TEXT NOT NULL DEFAULT (datetime('now'))
+                logged_at   TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
             )
         """)
 

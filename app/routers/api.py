@@ -70,11 +70,11 @@ async def display_stats(request: Request):
     import aiosqlite as _aiosqlite
     async with _aiosqlite.connect(settings.db_path) as db:
         cur = await db.execute(
-            "SELECT COUNT(*) FROM query_log WHERE logged_at >= date('now')"
+            "SELECT COUNT(*) FROM query_log WHERE logged_at >= datetime('now', 'start of day')"
         )
         queries_today = (await cur.fetchone())[0]
         cur = await db.execute(
-            "SELECT COUNT(*) FROM query_log WHERE action = 'blocked' AND logged_at >= date('now')"
+            "SELECT COUNT(*) FROM query_log WHERE action = 'blocked' AND logged_at >= datetime('now', 'start of day')"
         )
         blocked_today = (await cur.fetchone())[0]
         cur = await db.execute("SELECT COUNT(*) FROM devices")
@@ -159,12 +159,12 @@ async def get_stats(request: Request):
     await require_auth(request)
     async with aiosqlite.connect(settings.db_path) as db:
         cur = await db.execute(
-            "SELECT COUNT(*) FROM query_log WHERE logged_at >= date('now')"
+            "SELECT COUNT(*) FROM query_log WHERE logged_at >= datetime('now', 'start of day')"
         )
         queries_today = (await cur.fetchone())[0]
 
         cur = await db.execute(
-            "SELECT COUNT(*) FROM query_log WHERE action = 'blocked' AND logged_at >= date('now')"
+            "SELECT COUNT(*) FROM query_log WHERE action = 'blocked' AND logged_at >= datetime('now', 'start of day')"
         )
         blocked_today = (await cur.fetchone())[0]
 
@@ -241,7 +241,54 @@ async def add_blocklist(
     source_url: str = Form(None),
 ):
     await require_auth(request)
-    bl_id = await BlocklistService.add(name, category, source_url=source_url)
+    import asyncio
+    # Insert record immediately with 0 domains, fetch in background
+    async with aiosqlite.connect(settings.db_path) as db:
+        cur = await db.execute(
+            """INSERT INTO blocklists (name, category, source_url, source_type, domain_count, last_updated)
+               VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'))""",
+            (name, category, source_url, "url"),
+        )
+        bl_id = cur.lastrowid
+        await db.commit()
+    async def _fetch_in_bg(bid, url):
+        try:
+            raw = await BlocklistService.fetch_url(url)
+            domains = BlocklistService.parse_hosts_content(raw)
+            await BlocklistService.save_blocklist_file(bid, domains)
+            async with aiosqlite.connect(settings.db_path) as db:
+                await db.execute(
+                    "UPDATE blocklists SET domain_count = ?, last_updated = datetime('now', 'localtime') WHERE id = ?",
+                    (len(domains), bid),
+                )
+                await db.commit()
+            await BlocklistService.apply_all_active()
+        except Exception as e:
+            import logging
+            logging.getLogger("hexblock.blocklists").error("Background fetch failed: %s", e)
+    if source_url:
+        # Quick reachability check before adding
+        try:
+            async with aiosqlite.connect(settings.db_path) as db:
+                pass  # db is fine
+            import httpx as _httpx
+            async with _httpx.AsyncClient(timeout=10.0) as client:
+                r = await client.head(source_url, follow_redirects=True)
+                if r.status_code >= 400:
+                    # Remove the record we just inserted
+                    async with aiosqlite.connect(settings.db_path) as db:
+                        await db.execute("DELETE FROM blocklists WHERE id = ?", (bl_id,))
+                        await db.commit()
+                    raise HTTPException(status_code=400, detail=f"URL returned {r.status_code} — check the URL is correct")
+        except HTTPException:
+            raise
+        except Exception as e:
+            # Remove the record and return error
+            async with aiosqlite.connect(settings.db_path) as db:
+                await db.execute("DELETE FROM blocklists WHERE id = ?", (bl_id,))
+                await db.commit()
+            raise HTTPException(status_code=400, detail=f"Cannot reach URL: {e}")
+        asyncio.create_task(_fetch_in_bg(bl_id, source_url))
     return {"id": bl_id, "status": "added"}
 
 
@@ -253,10 +300,31 @@ async def upload_blocklist(
     file:     UploadFile = File(...),
 ):
     await require_auth(request)
-    content = (await file.read()).decode("utf-8", errors="ignore")
-    bl_id   = await BlocklistService.add(
-        name, category, source_type="file", content=content
-    )
+    import asyncio
+    raw_content = (await file.read()).decode("utf-8", errors="ignore")
+    async with aiosqlite.connect(settings.db_path) as db:
+        cur = await db.execute(
+            """INSERT INTO blocklists (name, category, source_url, source_type, domain_count, last_updated)
+               VALUES (?, ?, ?, ?, 0, datetime('now', 'localtime'))""",
+            (name, category, None, "file"),
+        )
+        bl_id = cur.lastrowid
+        await db.commit()
+    async def _parse_in_bg(bid, text):
+        try:
+            domains = BlocklistService.parse_hosts_content(text)
+            await BlocklistService.save_blocklist_file(bid, domains)
+            async with aiosqlite.connect(settings.db_path) as db:
+                await db.execute(
+                    "UPDATE blocklists SET domain_count = ?, last_updated = datetime('now', 'localtime') WHERE id = ?",
+                    (len(domains), bid),
+                )
+                await db.commit()
+            await BlocklistService.apply_all_active()
+        except Exception as e:
+            import logging
+            logging.getLogger("hexblock.blocklists").error("Background parse failed: %s", e)
+    asyncio.create_task(_parse_in_bg(bl_id, raw_content))
     return {"id": bl_id, "status": "uploaded"}
 
 

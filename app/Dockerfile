@@ -28,4 +28,4 @@ USER hexblock
 
 EXPOSE 8080
 
-CMD ["uvicorn", "hexblock:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
+CMD ["sh", "-c", "rm -f /tmp/hexblock-log-reader.lock && uvicorn hexblock:app --host 0.0.0.0 --port 8080 --workers 1"]

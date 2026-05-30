@@ -139,7 +139,7 @@ class AuthService:
                 (token, expires.isoformat(), ip),
             )
             await db.execute(
-                "UPDATE account SET last_login = datetime('now') WHERE id = 1"
+                "UPDATE account SET last_login = datetime('now', 'localtime') WHERE id = 1"
             )
             await db.commit()
 
@@ -153,7 +153,7 @@ class AuthService:
         async with aiosqlite.connect(settings.db_path) as db:
             cur = await db.execute(
                 """SELECT expires_at FROM sessions
-                   WHERE token = ? AND expires_at > datetime('now')""",
+                   WHERE token = ? AND expires_at > datetime('now', 'localtime')""",
                 (token,),
             )
             row = await cur.fetchone()
@@ -170,7 +170,7 @@ class AuthService:
     async def purge_expired_sessions():
         async with aiosqlite.connect(settings.db_path) as db:
             await db.execute(
-                "DELETE FROM sessions WHERE expires_at <= datetime('now')"
+                "DELETE FROM sessions WHERE expires_at <= datetime('now', 'localtime')"
             )
             await db.commit()
 

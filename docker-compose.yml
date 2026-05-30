@@ -30,7 +30,15 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /opt/hexblock-display:/opt/hexblock-display:ro
       - /sys/class/thermal:/sys/class/thermal:ro
-      - dnsmasq_d:/etc/dnsmasq.d
+      - /etc/dnsmasq.d:/etc/dnsmasq.d
+      - /usr/local/bin/hexblock-reload-dns:/usr/local/bin/hexblock-reload-dns:ro
+      - /proc:/host/proc:ro
+      - /var/log/dnsmasq.log:/var/log/dnsmasq.log:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /usr/local/bin/hexblock-reload-dns:/usr/local/bin/hexblock-reload-dns:ro
+      - /run/systemd/private:/run/systemd/private:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
     environment:
       - HEXBLOCK_ENV=production
       - DB_PATH=/data/db/hexblock.db
@@ -39,46 +47,16 @@ services:
     env_file:
       - path: .env
         required: false
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     security_opt:
       - no-new-privileges:true
     group_add:
       - "108"
-    depends_on:
-      - dns
     networks:
       - hexblock-net
 
-  # ── DNS filtering ─────────────────────────────────────────
-  # Port 53 is intentionally bound on all interfaces (0.0.0.0) so
-  # every device on your network can use HexBlock as its DNS server.
-  # dnsmasq.d is a named volume shared with the hexblock service so
-  # the app can write blocklist and local host files that dnsmasq
-  # picks up on reload without a container restart.
-  dns:
-    build:
-      context: ./dns
-      dockerfile: Dockerfile
-    container_name: hexblock-dns
-    restart: unless-stopped
-    ports:
-      - "53:53/udp"
-      - "53:53/tcp"
-    healthcheck:
-      test: ["CMD", "sh", "-c", "nslookup google.com 127.0.0.1 > /dev/null 2>&1 || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    volumes:
-      - ./dns/dnsmasq.conf:/etc/dnsmasq.conf:ro
-      - dnsmasq_d:/etc/dnsmasq.d
-      - ./data/blocklists:/data/blocklists:ro
-    cap_add:
-      - NET_BIND_SERVICE
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - hexblock-net
 
   # ── WireGuard VPN ─────────────────────────────────────────
   # Port 51820 UDP must be reachable from outside for VPN clients.

@@ -51,6 +51,10 @@ class BlocklistService:
             # plain domain
             if re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}$', line):
                 domains.append(line.lower())
+                continue
+            # plain IP address — block directly
+            if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', line):
+                domains.append(line)
 
         # deduplicate preserving order
         seen = set()
@@ -102,7 +106,7 @@ class BlocklistService:
         async with aiosqlite.connect(settings.db_path) as db:
             cur = await db.execute(
                 """INSERT INTO blocklists (name, category, source_url, source_type, domain_count, last_updated)
-                   VALUES (?, ?, ?, ?, ?, datetime('now'))""",
+                   VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))""",
                 (name, category, source_url, source_type, len(domains)),
             )
             bl_id = cur.lastrowid
@@ -151,7 +155,7 @@ class BlocklistService:
                 await BlocklistService.save_blocklist_file(bl_id, domains)
                 async with aiosqlite.connect(settings.db_path) as db:
                     await db.execute(
-                        "UPDATE blocklists SET domain_count = ?, last_updated = datetime('now') WHERE id = ?",
+                        "UPDATE blocklists SET domain_count = ?, last_updated = datetime('now', 'localtime') WHERE id = ?",
                         (len(domains), bl_id),
                     )
                     await db.commit()
@@ -184,6 +188,14 @@ class BlocklistService:
             deny_rows = await cur2.fetchall()
             deny_domains = [r[0] for r in deny_rows]
 
+        # Fetch allow rules
+        async with aiosqlite.connect(settings.db_path) as db:
+            cur3 = await db.execute(
+                "SELECT domain FROM rules WHERE rule_type = 'allow'"
+            )
+            allow_rows = await cur3.fetchall()
+            allow_domains = {r[0] for r in allow_rows}
+
         # Merge all domains
         all_domains: set[str] = set()
         for bl_id in bl_ids:
@@ -191,8 +203,10 @@ class BlocklistService:
             all_domains.update(doms)
         all_domains.update(deny_domains)
 
+        # Remove allowed domains and their subdomains
+        all_domains = {d for d in all_domains if not any(d == a or d.endswith('.' + a) for a in allow_domains)}
+
         # Write dnsmasq-format hosts file
-        # Format: address=/domain.com/#  — returns NXDOMAIN
         DNSMASQ_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         lines = [f"address=/{d}/0.0.0.0\naddress=/{d}/::" for d in sorted(all_domains)]
         DNSMASQ_OUTPUT.write_text(
@@ -212,10 +226,10 @@ class BlocklistService:
     @staticmethod
     def _reload_dnsmasq():
         try:
-            import docker as _docker
-            client = _docker.from_env()
-            container = client.containers.get("hexblock-dns")
-            container.restart(timeout=5)
-            logger.info("dnsmasq restarted via Docker SDK")
+            subprocess.run(
+                settings.dnsmasq_reload_cmd.split(),
+                capture_output=True, timeout=5,
+            )
+            logger.info("dnsmasq reloaded")
         except Exception as e:
-            logger.warning("dnsmasq restart failed: %s", e)
+            logger.warning("dnsmasq reload failed: %s", e)

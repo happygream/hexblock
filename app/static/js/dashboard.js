@@ -85,7 +85,10 @@ async function loadSettings() {
 function startPoll() {
   // SSE for real-time log updates
   if (HB.sse) { HB.sse.close(); HB.sse = null; }
-  HB.sse = new EventSource('/api/v1/stream');
+  HB.sse = new EventSource('/api/v1/stream', { withCredentials: true });
+  if (!HB._qCount) HB._qCount = 0;
+  if (!HB._bCount) HB._bCount = 0;
+
   HB.sse.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data);
@@ -101,6 +104,14 @@ function startPoll() {
         const rows = el.querySelectorAll('.qrow');
         if (rows.length > 50) rows[rows.length - 1].remove();
       }
+      // Update counters instantly
+      HB._qCount++;
+      if (data.action === 'blocked') HB._bCount++;
+      const rate = HB._qCount > 0 ? Math.round(HB._bCount / HB._qCount * 1000) / 10 : 0;
+      setText('d-queries', fmt(HB._qCount));
+      setText('d-blocked', fmt(HB._bCount));
+      setText('d-rate', rate + '%');
+      setText('nb-log', fmt(HB._bCount));
     } catch(_) {}
   };
   HB.sse.onerror = () => {};
@@ -182,6 +193,8 @@ async function renderDashboard() {
 
   if (stats.status === 'fulfilled') {
     const s = stats.value;
+    HB._qCount = s.queries_today || 0;
+    HB._bCount = s.blocked_today || 0;
     setText('d-queries', fmt(s.queries_today));
     setText('d-blocked',  fmt(s.blocked_today));
     setText('d-rate',     s.block_rate + '% block rate');
@@ -323,7 +336,6 @@ async function renderBlocklists() {
           <div class="or-div">presets</div>
           <div class="preset-grid">
             <div class="preset-btn" onclick="loadPreset('StevenBlack','Ads','https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts')"><div class="preset-btn-name">StevenBlack</div><div class="preset-btn-count">186k domains</div></div>
-            <div class="preset-btn" onclick="loadPreset('OISD Basic','Trackers','https://dbl.oisd.nl/basic/')"><div class="preset-btn-name">OISD Basic</div><div class="preset-btn-count">117k domains</div></div>
             <div class="preset-btn" onclick="loadPreset('Hagezi Pro','Trackers','https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/hosts/pro.txt')"><div class="preset-btn-name">Hagezi Pro</div><div class="preset-btn-count">521k domains</div></div>
             <div class="preset-btn" onclick="loadPreset('Phishing Army','Malware','https://phishing.army/download/phishing_army_blocklist.txt')"><div class="preset-btn-name">Phishing Army</div><div class="preset-btn-count">22k domains</div></div>
             <div class="preset-btn" onclick="loadPreset('EasyList','Ads','https://easylist.to/easylist/easylist.txt')"><div class="preset-btn-name">EasyList</div><div class="preset-btn-count">76k domains</div></div>
@@ -398,9 +410,15 @@ async function addBlocklist() {
     fd.append('file', fileInput.files[0]);
     await apiFd('/api/v1/blocklists/upload', fd);
   } else {
-    await apiFd('/api/v1/blocklists', fd);
+    try {
+      const result = await apiFd('/api/v1/blocklists', fd);
+    } catch(e) {
+      const msg = e.message || 'Failed to add blocklist';
+      toast('Error: ' + msg, 'error');
+      return;
+    }
   }
-  toast('"' + name + '" added');
+  toast('"' + name + '" added — fetching domains in background...');
   document.getElementById('bl-name').value = '';
   document.getElementById('bl-url').value  = '';
   document.getElementById('parse-result').classList.remove('show');
@@ -830,12 +848,13 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 // ── Toast ─────────────────────────────────────────────────────
 let toastTimer;
-function toast(msg) {
+function toast(msg, type) {
   const t = document.getElementById('toast');
   document.getElementById('toast-msg').textContent = msg;
   t.classList.add('show');
+  t.classList.toggle('toast-error', type === 'error');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); t.classList.remove('toast-error'); }, 3200);
 }
 
 // ── i18n shorthand ────────────────────────────────────────────
@@ -854,6 +873,13 @@ async function api(url, opts={}) {
 }
 async function apiFd(url, fd) {
   const r = await fetch(url, {method:'POST', body:fd});
-  if (!r.ok) throw new Error(r.status);
+  if (!r.ok) {
+    try {
+      const err = await r.json();
+      throw new Error(err.detail || r.status);
+    } catch(e) {
+      throw e;
+    }
+  }
   return r.json();
 }
