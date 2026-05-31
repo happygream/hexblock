@@ -7,6 +7,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.2.1] — 2026-05-31
+
+### Fixed
+- SponsorBlock segment skipping now works on mobile (replaced postMessage polling with YouTube IFrame Player API)
+
+### Added
+- Paste button on Watch page URL inputs — reads from clipboard directly into the player
+
+---
+
 ## [1.2.0] — 2026-05-29
 
 ### Added
@@ -46,6 +56,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Responsive CSS added for sidebar, content grid, and all pages at 700px
   and 420px breakpoints
 
+---
 
 ## [1.1.0] — 2026-05-22
 
