@@ -112,3 +112,22 @@ Initial release.
 - Extension event endpoint — Shield block events appear in query log
 - Docker Compose deployment with three containers (app, dns, wireguard)
 - install.sh and update.sh scripts
+
+---
+
+## [1.2.2] — 2026-06-02
+
+### Added
+- dnsmasq and AdBlock/AdGuard format support in blocklist parser
+- Local display screen auto-login endpoint (`/local-login`)
+- SQLite indexes on query_log, devices, rules, audit_log tables
+
+### Changed
+- SQLite WAL mode, memory cache, and mmap enabled on every connection
+- uvicorn increased to 2 workers with uvloop for faster request handling
+- Session timeout increased to 30 days for display screen
+- Blocklist page no longer polls — prevents pending request buildup
+
+### Fixed
+- Null getElementById crashes causing unwanted redirects to dashboard
+- VPN toggle classList crash on non-dashboard pages
