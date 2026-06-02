@@ -160,3 +160,24 @@ async def logout(request: Request):
     resp = RedirectResponse(url="/login", status_code=303)
     resp.delete_cookie("hb_session")
     return resp
+
+
+# ── Local display auto-login (localhost/LAN only) ─────────────
+@router.get("/local-login")
+async def local_login(request: Request, response: Response):
+    """Auto-login for local display screen — only works from local network."""
+    ip = get_client_ip(request)
+    allowed = ["127.0.0.1", "192.168.1.98", "::1"]
+    if ip not in allowed:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"detail": "Forbidden"}, status_code=403)
+    token = await AuthService.create_session(ip)
+    resp = RedirectResponse(url="/dashboard", status_code=303)
+    resp.set_cookie(
+        key="hb_session",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=86400 * 7,
+    )
+    return resp

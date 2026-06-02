@@ -29,34 +29,41 @@ class BlocklistService:
     @staticmethod
     def parse_hosts_content(text: str) -> list[str]:
         """
-        Parse a hosts file or plain domain list.
+        Parse any common blocklist format.
         Handles:
-          - 0.0.0.0 domain.com
-          - 127.0.0.1 domain.com
+          - 0.0.0.0 domain.com / 127.0.0.1 domain.com  (hosts)
+          - address=/domain.com/#                        (dnsmasq)
+          - address=/domain.com/0.0.0.0                 (dnsmasq)
+          - local=/domain.com/                           (dnsmasq)
+          - ||domain.com^                                (AdBlock/AdGuard)
           - plain domain.com lines
           - # comments
         """
         domains = []
+        SKIP = {"localhost", "0.0.0.0", "broadcasthost", "local", "255.255.255.255"}
         for line in text.splitlines():
             line = line.strip()
-            if not line or line.startswith("#"):
+            if not line or line.startswith(("#", "!", "[")):
                 continue
-            # hosts format
-            m = re.match(r'^(?:0\.0\.0\.0|127\.0\.0\.1)\s+(\S+)', line)
+            d = None
+            # dnsmasq: address=/domain/# or address=/domain/0.0.0.0
+            m = re.match(r'^(?:address|local)=/([^/]+)/', line)
             if m:
-                d = m.group(1).lower()
-                if d not in ("localhost", "0.0.0.0", "broadcasthost", "local"):
-                    domains.append(d)
-                continue
-            # plain domain
-            if re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}$', line):
-                domains.append(line.lower())
-                continue
-            # plain IP address — block directly
-            if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', line):
-                domains.append(line)
-
-        # deduplicate preserving order
+                d = m.group(1).lower().lstrip('.')
+            # AdBlock/AdGuard: ||domain^
+            elif line.startswith("||"):
+                m = re.match(r'^\|\|([^\^*/|]+)\^?', line)
+                if m:
+                    d = m.group(1).lower().lstrip('.')
+            # hosts: 0.0.0.0 domain or 127.0.0.1 domain
+            else:
+                m = re.match(r'^(?:0\.0\.0\.0|127\.0\.0\.1|::1?)\s+(\S+)', line)
+                if m:
+                    d = m.group(1).lower()
+                elif re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}$', line):
+                    d = line.lower()
+            if d and d not in SKIP and '.' in d and ' ' not in d:
+                domains.append(d)
         seen = set()
         result = []
         for d in domains:
@@ -64,7 +71,6 @@ class BlocklistService:
                 seen.add(d)
                 result.append(d)
         return result
-
     @staticmethod
     async def fetch_url(url: str) -> str:
         """Fetch a blocklist from a URL with a generous timeout."""
