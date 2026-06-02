@@ -45,7 +45,7 @@ function goPage(id) {
   document.querySelectorAll('.sb-item').forEach(el => {
     el.classList.toggle('active', el.dataset.page === id);
   });
-  (document.getElementById('topbar-title')||{}).textContent = PAGE_TITLES(id);
+  document.getElementById('topbar-title').textContent = PAGE_TITLES(id);
   const content = document.getElementById('content');
   content.innerHTML = `<div style="opacity:0.3;font-family:var(--mono);font-size:11px;padding:20px;">${_t('loading')}</div>`;
   renderPage(id);
@@ -69,11 +69,11 @@ async function loadSettings() {
   try {
     const data = await api('/api/v1/settings');
     if (data.hostname) {
-      (document.getElementById('tb-host')||{}).textContent   = data.hostname;
+      document.getElementById('tb-host').textContent   = data.hostname;
     }
     const u = data.username || 'admin';
-    (document.getElementById('sb-uname')||{}).textContent    = u;
-    (document.getElementById('sb-avatar')||{}).textContent   = u[0].toUpperCase();
+    document.getElementById('sb-uname').textContent    = u;
+    document.getElementById('sb-avatar').textContent   = u[0].toUpperCase();
     // Apply saved language preference from server
     if (data.language && window.HBI18n) {
       window.HBI18n.setLocale(data.language);
@@ -205,15 +205,15 @@ async function renderDashboard() {
   }
 
   if (HB.liveLog && HB.liveLog.length > 0) {
-    (document.getElementById('dash-log')||{}).innerHTML = HB.liveLog.slice(0,50).map(logRow).join('');
+    document.getElementById('dash-log').innerHTML = HB.liveLog.slice(0,50).map(logRow).join('');
   } else if (log.status === 'fulfilled') {
-    (document.getElementById('dash-log')||{}).innerHTML = log.value.map(logRow).join('');
+    document.getElementById('dash-log').innerHTML = log.value.map(logRow).join('');
   }
 
   if (bls.status === 'fulfilled') {
     const active = bls.value.filter(b => b.enabled);
     setText('d-bl-badge', active.length + ' lists');
-    (document.getElementById('d-bl-body')||{}).innerHTML = active.slice(0, 5).map(b =>
+    document.getElementById('d-bl-body').innerHTML = active.slice(0, 5).map(b =>
       `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);">
         <span style="font-size:12px;">${esc(b.name)}</span>
         <span class="badge badge-g">${b.domain_count.toLocaleString()}</span>
@@ -225,14 +225,14 @@ async function renderDashboard() {
     setText('d-devices',      devs.value.length);
     setText('d-devices-sub',  online + ' seen recently');
     setText('d-devices-badge', online + ' active');
-    (document.getElementById('d-devices-list')||{}).innerHTML = devs.value.slice(0, 4).map(devRow).join('');
+    document.getElementById('d-devices-list').innerHTML = devs.value.slice(0, 4).map(devRow).join('');
   }
 
   if (vpnStatus.status === 'fulfilled') {
     const v = vpnStatus.value;
     setText('vpn-name',   v.running ? _t('vpn_active') : _t('vpn_tunnel_down'));
     setText('vpn-detail', v.running ? 'WireGuard — all traffic tunnelled' : _t('vpn_no_vpn'));
-    const vpnTog = document.getElementById('vpn-tog'); if (vpnTog) vpnTog.classList.toggle('off', !v.running);
+    document.getElementById('vpn-tog').classList.toggle('off', !v.running);
     setText('vpn-lbl', v.running ? 'VPN On' : _t('vpn_off'));
   }
 
@@ -258,7 +258,7 @@ async function renderQueryLog() {
 async function loadLog() {
   const f = HB.qlFilter;
   const data = await api(`/api/v1/log?limit=100&filter=${f}`);
-  (document.getElementById('ql-rows')||{}).innerHTML = data.length
+  document.getElementById('ql-rows').innerHTML = data.length
     ? data.map(logRow).join('')
     : emptyState(_t('log_empty'));
   setText('ql-count', data.length + ' entries');
@@ -354,7 +354,7 @@ async function loadBl() {
   setText('bl-badge', active.length + ' active');
   setText('nb-bl', active.length);
   const catMap = {Ads:'r',Trackers:'b',Malware:'w',Social:'b',Telemetry:'g',Adult:'r',Custom:'g'};
-  (document.getElementById('bl-table')||{}).innerHTML = data.length
+  document.getElementById('bl-table').innerHTML = data.length
     ? data.map(b => `
       <div class="bl-row">
         <div class="bl-icon">${b.category.slice(0,2).toUpperCase()}</div>
@@ -443,8 +443,8 @@ function processBlFile(file) {
       if (/^[a-zA-Z0-9][a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}$/.test(t)) doms.push(t);
     }
     HB.blParsed = doms.length;
-    (document.getElementById('drop-lbl')||{}).textContent = file.name + ' — ' + doms.length.toLocaleString() + ' domains';
-    (document.getElementById('parse-num')||{}).textContent = doms.length >= 1000 ? Math.round(doms.length/1000) + 'k' : doms.length;
+    document.getElementById('drop-lbl').textContent = file.name + ' — ' + doms.length.toLocaleString() + ' domains';
+    document.getElementById('parse-num').textContent = doms.length >= 1000 ? Math.round(doms.length/1000) + 'k' : doms.length;
     document.getElementById('parse-result').classList.add('show');
     if (!document.getElementById('bl-name').value) document.getElementById('bl-name').value = file.name.replace(/\.[^.]+$/, '');
     toast(_t('bl_parsed') + ' ' + doms.length.toLocaleString() + ' ' + _t('bl_domains_suffix') + ' — ' + file.name);
@@ -473,7 +473,7 @@ async function renderRules() {
 
 async function loadRules() {
   const data = await api('/api/v1/rules');
-  const rl = document.getElementById('rules-list'); if (!rl) return; rl.innerHTML = data.length
+  document.getElementById('rules-list').innerHTML = data.length
     ? data.map(r => `
       <div class="dev-item">
         <span class="badge ${r.rule_type==='allow'?'badge-g':'badge-r'}">${r.rule_type}</span>
@@ -573,7 +573,7 @@ async function renderDevices() {
       </div>
     </div>`);
   const data = await api('/api/v1/devices');
-  (document.getElementById('all-devices')||{}).innerHTML = data.length
+  document.getElementById('all-devices').innerHTML = data.length
     ? data.map(d => devRow(d, true)).join('')
     : emptyState(_t('dev_empty'));
 }
@@ -635,7 +635,7 @@ async function renderSecurity() {
     </div>`);
 
   const audit = await api('/api/v1/audit?limit=20');
-  (document.getElementById('audit-list')||{}).innerHTML = audit.length
+  document.getElementById('audit-list').innerHTML = audit.length
     ? audit.map(a => `
       <div class="audit-row">
         <span class="audit-time">${esc(a.logged_at ? a.logged_at.slice(11,16) : '—')}</span>
@@ -771,7 +771,7 @@ hexblock.example.com {
 - "traefik.http.routers.hexblock.tls.certresolver=letsencrypt"
 - "traefik.http.services.hexblock.loadbalancer.server.port=8080"`,
   };
-  (document.getElementById('proxy-example')||{}).innerHTML =
+  document.getElementById('proxy-example').innerHTML =
     `<div class="code-block">${esc(examples[proxy])}</div>`;
 }
 
@@ -850,7 +850,7 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 let toastTimer;
 function toast(msg, type) {
   const t = document.getElementById('toast');
-  (document.getElementById('toast-msg')||{}).textContent = msg;
+  document.getElementById('toast-msg').textContent = msg;
   t.classList.add('show');
   t.classList.toggle('toast-error', type === 'error');
   clearTimeout(toastTimer);

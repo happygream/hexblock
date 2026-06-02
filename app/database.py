@@ -18,10 +18,6 @@ async def get_db() -> aiosqlite.Connection:
         db.row_factory = aiosqlite.Row
         await db.execute("PRAGMA journal_mode=WAL")
         await db.execute("PRAGMA foreign_keys=ON")
-        await db.execute("PRAGMA synchronous=NORMAL")
-        await db.execute("PRAGMA cache_size=-32000")
-        await db.execute("PRAGMA temp_store=MEMORY")
-        await db.execute("PRAGMA mmap_size=268435456")
         yield db
 
 
@@ -31,10 +27,6 @@ async def init_db():
     async with aiosqlite.connect(DB) as db:
         await db.execute("PRAGMA journal_mode=WAL")
         await db.execute("PRAGMA foreign_keys=ON")
-        await db.execute("PRAGMA synchronous=NORMAL")
-        await db.execute("PRAGMA cache_size=-32000")
-        await db.execute("PRAGMA temp_store=MEMORY")
-        await db.execute("PRAGMA mmap_size=268435456")
 
         # ── Settings / setup state ──────────────────────────
         await db.execute("""
