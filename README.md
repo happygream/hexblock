@@ -1,333 +1,106 @@
 # HexBlock
 
-A self-hosted network privacy gateway. Blocks ads, trackers, and malware
-at the DNS level across every device on your network — no client software
-required. Includes a WireGuard VPN so all traffic is encrypted end-to-end
-even when you are away from home.
+<p align="center">
+  <img src="banner.svg" alt="HexBlock — Self-Hosted Privacy Gateway" width="900"/>
+</p>
 
-**HexBlock is free and open source. There is no cloud component, no account
-required, and no telemetry.**
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.1.0-00e8c0?style=flat-square" alt="Version"/>
+  <img src="https://img.shields.io/badge/license-MIT-3d5a72?style=flat-square" alt="MIT"/>
+  <img src="https://img.shields.io/badge/platform-Raspberry%20Pi%20%7C%20Linux-00e8c0?style=flat-square" alt="Platform"/>
+  <img src="https://img.shields.io/badge/docker-compose-3d5a72?style=flat-square" alt="Docker"/>
+</p>
 
----
+<br/>
 
-## What it does
+HexBlock is a free, self-hosted privacy gateway. **DNS filtering** blocks ads and trackers on every device on your network without installing anything on them. **WireGuard VPN** encrypts all traffic in transit. One command to install.
 
-DNS filtering intercepts name resolution requests from every device on your
-network. When a device attempts to contact a domain on a blocklist — an ad
-server, a tracker, a known phishing domain — HexBlock returns NXDOMAIN
-instead of the real address. The request never leaves your network.
+## Features
 
-WireGuard VPN encrypts all traffic from connected devices and routes it
-through your HexBlock server. This means DNS filtering applies even when
-devices are not on your home network, and all traffic is encrypted in transit.
-
-Neither feature requires installing anything on your devices beyond pointing
-DNS at the server, or scanning a QR code to join the VPN.
-
----
+- **DNS filtering** — 500k+ domains blocked by default. Hagezi Ultimate, EasyList, Pi-hole lists and more. Auto-updates daily. No manual maintenance.
+- **Custom allow & deny rules** — per-domain rules that override all blocklists. Applied instantly, no restart required.
+- **Live query log** — every DNS query in real time with device attribution. Filter by allowed or blocked. Search by domain. 7-day rolling retention.
+- **WireGuard VPN** — automatic key generation, per-device QR code onboarding. Traffic encrypted and filtered everywhere — at home and away. Works on any device.
+- **Tailscale support** — works on mobile data including CGNAT carriers (Three, O2 etc). Install Tailscale on your device, set HexBlock as your exit node.
+- **HexBlock Watch** — ad-free YouTube at hexblock.co.uk/watch. No install, no account. SponsorBlock built in. Works on every device.
+- **HexBlock Shield** — browser extension for Chrome, Firefox, and Edge. Blocks inline ads DNS can't reach. YouTube pre-roll/mid-roll skipping, SponsorBlock integration, Twitch ad hide & mute.
+- **Security hardened** — Argon2id password hashing, brute-force lockout, CSRF protection, optional TOTP 2FA, full admin audit log.
+- **Proxy ready** — Traefik, Caddy, Nginx, or Cloudflare Tunnel. Setup script writes all config files.
+- **Runs on a Raspberry Pi** — 200 MB RAM at idle, 5 watts 24/7. No cloud, no subscription, no phoning home.
 
 ## Requirements
 
-- Linux host — Ubuntu 22.04 or 24.04 recommended. Raspberry Pi OS works.
-  Minimum 1 GB RAM, 8 GB disk.
-- Docker and Docker Compose v2
-- Port 53 available on the host (see note below)
-- Port 51820 UDP open if you want to use the WireGuard VPN
-
----
+- Any Linux server or Raspberry Pi (64-bit OS)
+- Docker and Docker Compose
+- 512 MB RAM minimum (200 MB at idle)
 
 ## Install
 
-Clone the repository and run the setup script:
+One command:
 
 ```bash
-git clone https://github.com/happygream/hexblock /opt/hexblock
-cd /opt/hexblock
-sudo bash scripts/setup.sh
+sudo bash <(curl -fsSL hexblock.co.uk/install.sh)
 ```
 
-Or use the one-line installer which handles Docker installation as well:
+The interactive setup script asks five questions and writes every config file. Pick your deployment mode and it handles the rest.
 
-```bash
-curl -fsSL https://hexblock.co.uk/install.sh | sudo bash
-```
-
-The setup script is interactive. It will ask you to choose a deployment mode
-and then write all required configuration files.
-
-**Deployment modes available:**
+## Deployment modes
 
 | Mode | Description |
-|---|---|
-| HTTP only | No proxy, accessible on your local network at port 8080 |
-| Nginx | You manage Nginx and SSL certificates |
-| Caddy | Caddy fetches SSL certificates automatically |
-| Traefik | Docker-native reverse proxy with Let's Encrypt |
-| Cloudflare Tunnel | No open inbound ports, SSL at Cloudflare's edge |
+|------|-------------|
+| **Home network** | No domain needed. Script sets a static IP and local hostname automatically. |
+| **Cloudflare Tunnel** | Recommended. Zero open ports. Cloudflare handles SSL. Works behind CG-NAT. |
+| **Caddy** | Auto-fetches and renews SSL certificates. Zero certificate configuration. |
+| **Nginx** | Script generates your config and prints exact commands. Certbot included. |
 
-The script writes a `.env` file, a `docker-compose.override.yml` specific to
-your chosen deployment mode, and any proxy configuration files needed. It can
-be re-run at any time to reconfigure.
+## Connecting devices
 
-After setup, open the dashboard URL shown at the end of the script to complete
-first-run account creation.
+### Tailscale (recommended — works everywhere including mobile data)
 
----
+Tailscale works on all networks including CGNAT mobile carriers that block inbound connections.
 
-## Port 53 on Ubuntu
+1. Install Tailscale on HexBlock: `curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --advertise-exit-node`
+2. In the [Tailscale admin panel](https://login.tailscale.com/admin/machines), enable HexBlock as an exit node
+3. Install Tailscale on your device ([Android](https://tailscale.com/download/android) / [iPhone](https://tailscale.com/download/ios) / [Windows](https://tailscale.com/download/windows))
+4. Sign in with the same account → tap hexblock → Use as exit node
 
-Ubuntu 22.04 and later run `systemd-resolved` which binds port 53 by default.
-HexBlock needs that port for its DNS server. The install script will offer to
-disable `systemd-resolved` for you. To do it manually:
+### WireGuard (WiFi networks with port forwarding)
 
-```bash
-sudo systemctl disable --now systemd-resolved
-sudo rm /etc/resolv.conf
-echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf
-echo 'nameserver 1.0.0.1' | sudo tee -a /etc/resolv.conf
-```
+1. Forward port 41820 UDP on your router to your HexBlock server IP
+2. In the HexBlock dashboard → VPN / WireGuard → enter a device name → Generate Config
+3. Scan the QR code with the [WireGuard app](https://www.wireguard.com/install/)
 
----
+> **Note:** WireGuard requires a real public IP and open port. It does not work on mobile data with CGNAT carriers (Three, O2 etc). Use Tailscale for mobile.
 
-## Pointing devices at HexBlock
+## HexBlock Shield
 
-**DNS only (no VPN)**
+Browser extension companion for HexBlock. Blocks ads that DNS filtering can't reach — YouTube inline ads, Twitch pre-roll, ad trackers inside the browser.
 
-Set the DNS server on each device or on your router to the IP address of
-your HexBlock server. Any device using that DNS server will have its queries
-filtered automatically. No software installation required.
+- [Chrome Web Store](https://chromewebstore.google.com/detail/hexblock-shield/bmjflnnopehafhmelobgbjeobdhokifj)
+- [GitHub — hexblock-shield](https://github.com/happygream/hexblock-shield)
 
-**WireGuard VPN**
+## Stack
 
-Go to the VPN page in the dashboard, enter a device name, and scan the
-generated QR code with the WireGuard app on your device. All traffic from
-that device will route through HexBlock and be encrypted in transit.
-
-WireGuard is available for Android, iOS, Windows, macOS, and Linux.
-
----
-
-## Reverse proxy
-
-HexBlock can run behind Nginx, Caddy, Traefik, or a Cloudflare Tunnel.
-Configuration examples and setup instructions are in the `proxy/` directory.
-
-The relevant `.env` settings:
-
-| Setting | Description |
-|---|---|
-| `TRUST_PROXY=1` | Trust `X-Forwarded-For` from any upstream proxy |
-| `TRUST_CLOUDFLARE=1` | Trust `CF-Connecting-IP` only from verified Cloudflare IP ranges |
-| `ALLOWED_HOSTS` | Comma-separated list of allowed hostnames |
-| `ROOT_PATH` | Sub-path prefix if not serving at the domain root |
-
-Do not set both `TRUST_PROXY` and `TRUST_CLOUDFLARE`. Use one or the other.
-
-For Cloudflare Tunnel specifically, see [`proxy/cloudflare-tunnel.md`](proxy/cloudflare-tunnel.md).
-
----
-
-## Blocklists
-
-HexBlock ships with six preset blocklist categories that can be enabled during
-setup or at any time from the dashboard. You can also add any blocklist by URL
-or by uploading a file directly.
-
-Supported formats:
-- Hosts file format (`0.0.0.0 domain.com` or `127.0.0.1 domain.com`)
-- Plain domain lists, one domain per line
-- Any format used by Pi-hole or AdGuard Home
-
-Preset sources used by default:
-- [StevenBlack Hosts](https://github.com/StevenBlack/hosts) — ads
-- [OISD Basic](https://oisd.nl) — trackers
-- [Phishing Army](https://phishing.army) — malware and phishing
-
-Blocklists are updated automatically at 3am daily. You can trigger a manual
-sync from the dashboard at any time.
-
----
-
-## Custom rules
-
-Any domain can be individually allowed or blocked from the Custom Rules page.
-Custom rules take precedence over all blocklists.
-
----
-
-## Security
-
-**Authentication**
-
-- Single admin account created during first-run setup
-- Passwords hashed with Argon2id
-- Session tokens are random 48-byte URL-safe strings with configurable expiry
-- Brute-force lockout after 5 failed attempts per IP, configurable duration
-- Optional TOTP two-factor authentication
-
-**Transport**
-
-- Set `TRUST_CLOUDFLARE=1` or `TRUST_PROXY=1` only if you are actually running
-  behind the corresponding proxy. Enabling either without a proxy in place allows
-  IP spoofing via forged headers.
-- When `TRUST_CLOUDFLARE=1`, HexBlock validates that `CF-Connecting-IP` headers
-  only arrive from Cloudflare's published IP ranges.
-- Set `ALLOWED_HOSTS` to your specific domain to prevent host header injection.
-
-**Container hardening**
-
-The application container runs as a non-root user. The `docker-compose.yml`
-sets `no-new-privileges: true` on each container.
-
-**Reporting security issues**
-
-If you find a vulnerability, please open a GitHub issue marked as Security
-or contact the maintainer directly before disclosing publicly.
-
----
+- **Backend** — Python / Flask, SQLite, Docker Compose
+- **DNS** — dnsmasq
+- **VPN** — WireGuard (linuxserver/wireguard)
+- **Proxy** — Traefik / Caddy / Nginx / Cloudflare Tunnel
+- **Frontend** — Vanilla JS, Space Grotesk, JetBrains Mono
 
 ## Updating
 
 ```bash
-sudo bash /opt/hexblock/scripts/update.sh
+sudo bash /opt/hexblock/update.sh
 ```
 
-This pulls the latest code and rebuilds the application container. The DNS
-and WireGuard containers are left running during an update. Your data,
-blocklists, and configuration are stored in `/opt/hexblock/data` which is
-never modified by an update.
+## Licence
+
+MIT — free forever. No subscription, no cloud, no phoning home.
 
 ---
 
-## Project structure
-
-```
-hexblock/
-  app/
-    hexblock.py          Application entrypoint
-    config.py            Settings loaded from environment
-    database.py          SQLite schema and connection
-    routers/
-      auth.py            Onboarding, login, logout
-      api.py             REST API used by the dashboard frontend
-      deps.py            Shared auth dependency
-      dashboard.py       Dashboard page
-      blocklists.py      Blocklists page
-      devices.py         Devices page
-      vpn.py             VPN page
-      rules.py           Custom rules page
-      security.py        Security page
-      settings.py        Settings page
-    services/
-      auth_service.py    Password hashing, sessions, TOTP, lockout
-      blocklist_service.py  Fetch, parse, apply blocklists to dnsmasq
-      wireguard_service.py  Key generation, peer config, QR codes
-      scheduler.py       Daily blocklist update scheduler
-    models/
-      schemas.py         Pydantic request/response validation
-    static/
-      css/hexblock.css
-      js/dashboard.js
-      js/hexblock.js
-      js/i18n.js          Internationalisation — 10 languages, ~90 keys each
-    templates/
-      base.html
-      onboard.html
-      login.html
-      dashboard.html
-  dns/
-    Dockerfile
-    dnsmasq.conf         Base DNS configuration
-  wireguard/             WireGuard config (generated on first run, not in git)
-  proxy/
-    nginx.conf           Nginx reverse proxy configuration
-    Caddyfile            Caddy reverse proxy configuration
-    traefik.yml          Traefik reverse proxy configuration
-    cloudflare-tunnel.md Cloudflare Tunnel setup guide
-  scripts/
-    install.sh           First-run installer
-    update.sh            Safe update script
-  data/                  Persistent data — not in git
-    db/                  hexblock.db (SQLite)
-    blocklists/          Per-list domain files
-    logs/                Application logs
-  docker-compose.yml
-  .env.example
-```
-
----
-
-## Stack
-
-| Component | Technology |
-|---|---|
-| Backend | FastAPI (Python 3.12) |
-| Database | SQLite with WAL mode |
-| DNS engine | dnsmasq |
-| VPN | WireGuard |
-| Packaging | Docker Compose |
-| Frontend | Vanilla JS |
-| i18n | Custom JS i18n system |
-
----
-
-## Languages
-
-The dashboard is available in 10 languages. The language is auto-detected
-from the browser on first visit and can be changed in Settings.
-
-| Code | Language |
-|---|---|
-| `en` | English |
-| `fr` | Français |
-| `de` | Deutsch |
-| `es` | Español |
-| `it` | Italiano |
-| `pt` | Português |
-| `nl` | Nederlands |
-| `pl` | Polski |
-| `ja` | 日本語 |
-| `zh` | 中文 |
-
-Language preference is saved per-user in the database and syncs across
-devices. The login and onboarding pages use browser language detection.
-
-To add a new language, add a translation object to `app/static/js/i18n.js`
-following the existing structure and add the locale code to the `SUPPORTED`
-array at the top of the file. All ~90 keys must be present — missing keys
-fall back to English.
-
----
-
-## HexBlock Shield
-
-HexBlock Shield is a browser extension that complements the gateway.
-It handles the things DNS filtering cannot — YouTube pre-roll and mid-roll
-ads (which are served from the same domains as video content), cosmetic ad
-placeholders, and in-video sponsor segments via the
-[SponsorBlock](https://sponsor.ajay.app) API.
-
-The extension can connect to your HexBlock gateway to pull blocklist updates
-from your own server rather than a third-party CDN, and reports block events
-back to the dashboard.
-
-It also works standalone without a gateway, in the same way as uBlock Origin.
-
-The extension repository is at `github.com/happygream/hexblock-shield`.
-
----
-
-## Contributing
-
-Pull requests are welcome. Please open an issue first for anything beyond
-small fixes so the change can be discussed before implementation.
-
-The codebase follows standard Python conventions. Run the test suite with
-`pytest` before submitting. There are no linting exceptions — the CI will
-reject anything that does not pass `ruff` and `mypy`.
-
----
-
-## License
-
-MIT. See `LICENSE`.
+<p align="center">
+  <a href="https://hexblock.co.uk">hexblock.co.uk</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/happygream/hexblock-shield">HexBlock Shield</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/happygream/hexblock/blob/main/SECURITY.md">Security</a>
+</p>

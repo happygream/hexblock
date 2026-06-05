@@ -102,12 +102,12 @@ PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACC
 
         peer_conf = f"""[Interface]
 PrivateKey = {private_key}
-Address    = {peer_ip}
+Address = {peer_ip}
 DNS        = {subnet_base}.1
 
 [Peer]
-PublicKey  = {server_pub}
-Endpoint   = {hostname}:{settings.wg_port}
+PublicKey = {server_pub}
+Endpoint = {hostname}:{settings.wg_port}
 AllowedIPs = 0.0.0.0/0, ::/0
 PersistentKeepalive = 25
 """
@@ -124,7 +124,7 @@ PersistentKeepalive = 25
         pub_fragment = f"""
 [Peer]
 # {device_name}
-PublicKey  = {public_key}
+PublicKey = {public_key}
 AllowedIPs = {peer_ip.replace('/32', '/32')}
 """
         conf_path = WG_DIR / "wg0.conf"

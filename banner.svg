@@ -1,0 +1,81 @@
+<svg width="900" height="240" viewBox="0 0 900 240" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>HexBlock — Self-Hosted Privacy Gateway</title>
+<desc>Banner showing HexBlock logo, name, tagline and stat cards</desc>
+<defs>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap');
+    .sg { font-family: 'Space Grotesk', sans-serif; }
+    .jm { font-family: 'JetBrains Mono', monospace; }
+    .fade-in  { animation: fi 0.6s ease both; }
+    .fade-in-1 { animation: fi 0.6s 0.15s ease both; }
+    .fade-in-2 { animation: fi 0.6s 0.3s  ease both; }
+    .fade-in-3 { animation: fi 0.6s 0.45s ease both; }
+    .fade-in-4 { animation: fi 0.6s 0.6s  ease both; }
+    .wipe { animation: wipe 0.9s 0.1s cubic-bezier(.77,0,.175,1) both; }
+    @keyframes fi   { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @keyframes wipe { from { clip-path:inset(0 100% 0 0); } to { clip-path:inset(0 0% 0 0); } }
+    .pulse-ring { animation: pr 3s ease-in-out infinite; }
+    @keyframes pr { 0%,100%{opacity:.15;r:28} 50%{opacity:0;r:42} }
+    .hex-pulse  { animation: hp 2.4s ease-in-out infinite; }
+    @keyframes hp { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .sweep { animation: sw 3s 0.8s ease-in-out both; }
+    @keyframes sw { from{width:0} to{width:520px} }
+  </style>
+  <clipPath id="banner-clip">
+    <rect width="900" height="240" rx="8"/>
+  </clipPath>
+</defs>
+
+<g clip-path="url(#banner-clip)">
+  <rect width="900" height="240" fill="#060608"/>
+  <rect x="0" y="0" width="900" height="240" fill="none" stroke="#00e8c0" stroke-width="0.5" opacity="0.15"/>
+  <line x1="0" y1="239.5" x2="900" y2="239.5" stroke="#00e8c0" stroke-width="0.5" opacity="0.3"/>
+
+  <rect x="0" y="0" width="280" height="240" fill="#0a0a0e"/>
+  <line x1="280" y1="0" x2="280" y2="240" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+
+  <circle cx="140" cy="100" r="42" fill="none" stroke="#00e8c0" stroke-width="0.5" opacity="0.08" class="pulse-ring"/>
+  <circle cx="140" cy="100" r="28" fill="none" stroke="#00e8c0" stroke-width="0.5" opacity="0.15"/>
+
+  <g transform="translate(118,74)" class="hex-pulse">
+    <path d="M22 0L44 12.7V38.1L22 50.8L0 38.1V12.7L22 0Z" fill="rgba(0,232,192,.07)" stroke="#00e8c0" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M22 10L37 18.7V35.3L22 44L7 35.3V18.7L22 10Z" fill="rgba(0,232,192,.18)" stroke="#00e8c0" stroke-width="1" stroke-linejoin="round"/>
+  </g>
+
+  <text x="140" y="158" text-anchor="middle" class="sg fade-in-1" font-size="22" font-weight="700" letter-spacing="-0.02em" fill="#eeecea">Hex<tspan fill="#00e8c0">Block</tspan></text>
+  <text x="140" y="176" text-anchor="middle" class="jm fade-in-2" font-size="9" letter-spacing="0.18em" fill="#4a6070">PRIVACY GATEWAY</text>
+
+  <g class="wipe">
+    <text x="310" y="78"  class="sg" font-size="42" font-weight="700" letter-spacing="-0.04em" fill="#eeecea">Self-hosted.</text>
+    <text x="310" y="122" class="sg" font-size="42" font-weight="700" letter-spacing="-0.04em" fill="#00e8c0">Ad-free.</text>
+  </g>
+
+  <text x="310" y="152" class="sg fade-in-3" font-size="13" fill="#9ab0c4">DNS filtering + WireGuard VPN. One command. Free forever.</text>
+
+  <line x1="310" y1="166" x2="830" y2="166" stroke="rgba(255,255,255,.06)" stroke-width="0.5" class="sweep"/>
+
+  <g class="fade-in-4">
+    <rect x="310" y="172" width="120" height="38" rx="3" fill="#0d0d12" stroke="rgba(255,255,255,.07)" stroke-width="0.5"/>
+    <text x="322" y="187" class="jm" font-size="9" letter-spacing="0.12em" fill="#4a6070">DOMAINS BLOCKED</text>
+    <text x="322" y="202" class="jm" font-size="16" font-weight="500" fill="#00e8c0">500k+</text>
+
+    <rect x="440" y="172" width="100" height="38" rx="3" fill="#0d0d12" stroke="rgba(255,255,255,.07)" stroke-width="0.5"/>
+    <text x="452" y="187" class="jm" font-size="9" letter-spacing="0.12em" fill="#4a6070">LATENCY</text>
+    <text x="452" y="202" class="jm" font-size="16" font-weight="500" fill="#00e8c0">0ms</text>
+
+    <rect x="550" y="172" width="100" height="38" rx="3" fill="#0d0d12" stroke="rgba(255,255,255,.07)" stroke-width="0.5"/>
+    <text x="562" y="187" class="jm" font-size="9" letter-spacing="0.12em" fill="#4a6070">COST</text>
+    <text x="562" y="202" class="jm" font-size="16" font-weight="500" fill="#00e8c0">£0</text>
+
+    <rect x="660" y="172" width="130" height="38" rx="3" fill="#0d0d12" stroke="rgba(255,255,255,.07)" stroke-width="0.5"/>
+    <text x="672" y="187" class="jm" font-size="9" letter-spacing="0.12em" fill="#4a6070">INSTALL</text>
+    <text x="672" y="202" class="jm" font-size="16" font-weight="500" fill="#00e8c0">1 command</text>
+  </g>
+
+  <rect x="310" y="28" width="74" height="18" rx="9" fill="rgba(0,232,192,.1)" stroke="rgba(0,232,192,.25)" stroke-width="0.5" class="fade-in"/>
+  <text x="347" y="40" text-anchor="middle" class="jm fade-in" font-size="9" letter-spacing="0.1em" fill="#00e8c0">OPEN SOURCE</text>
+
+  <rect x="394" y="28" width="42" height="18" rx="9" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.08)" stroke-width="0.5" class="fade-in"/>
+  <text x="415" y="40" text-anchor="middle" class="jm fade-in" font-size="9" letter-spacing="0.1em" fill="#4a6070">MIT</text>
+</g>
+</svg>

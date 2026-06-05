@@ -504,31 +504,66 @@ async function deleteRule(id) {
 // ── VPN ────────────────────────────────────────────────────────
 async function renderVPN() {
   setContent(`
-    <div style="animation:pagein 0.2s ease both;">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-head"><span class="card-title">WireGuard Status</span><span class="badge badge-g" id="vpn-status-badge">Checking</span></div>
-          <div class="vpn-wrap">
-            <div class="vpn-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
-            <div>
-              <div class="vpn-name" id="vpn2-name">—</div>
-              <div class="vpn-detail" id="vpn2-detail" style="margin-top:4px;"></div>
+    <div style="animation:pagein 0.2s ease both;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Tailscale — primary recommendation -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Connect a Device</span>
+          <span class="badge badge-g">Recommended</span>
+        </div>
+        <div class="card-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start;">
+            <div style="width:36px;height:36px;background:var(--acc-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;color:var(--white);margin-bottom:4px;">Tailscale <span style="font-size:11px;font-weight:400;color:var(--acc);margin-left:6px;">Works on mobile data + CGNAT</span></div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">Works everywhere including mobile data (Three, O2 etc). Install Tailscale on your device, sign in with the same account, and set HexBlock as your exit node.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="https://tailscale.com/download/android" target="_blank" class="btn btn-primary btn-sm">Android</a>
+                <a href="https://tailscale.com/download/ios" target="_blank" class="btn btn-primary btn-sm">iPhone</a>
+                <a href="https://tailscale.com/download/windows" target="_blank" class="btn btn-primary btn-sm">Windows</a>
+                <a href="https://login.tailscale.com/admin/machines" target="_blank" class="btn btn-ghost btn-sm">Admin Panel</a>
+              </div>
+              <div style="margin-top:10px;font-size:11px;color:var(--muted);font-family:var(--mono);">After installing: open Tailscale app → sign in → tap hexblock → Use as exit node</div>
             </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-title">Add Device</span></div>
-          <div class="card-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
-            <input class="form-input" id="new-device-name" type="text" placeholder="Device name e.g. Mikes iPhone" style="width:100%;">
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="addDevice()">Generate WireGuard Config</button>
-            <div id="qr-result" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;">
-              <img id="qr-img" style="width:140px;height:140px;border:4px solid #fff;" alt="WireGuard QR code">
-              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;line-height:1.6;">Scan with WireGuard app to connect</div>
-              <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="downloadConfig()">Download Config File</button>
+
+          <!-- WireGuard — advanced -->
+          <div style="background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start;">
+            <div style="width:36px;height:36px;background:var(--acc-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;color:var(--white);margin-bottom:4px;">WireGuard <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px;">Requires port forwarding — WiFi only</span></div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;">Direct WireGuard connection. Requires port 41820 UDP forwarded on your router. Does not work on mobile data with CGNAT carriers.</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input class="form-input" id="new-device-name" type="text" placeholder="Device name e.g. Mikes iPhone" style="flex:1;min-width:160px;">
+                <button class="btn btn-ghost btn-sm" onclick="addDevice()">Generate Config</button>
+              </div>
+              <div id="qr-result" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;margin-top:12px;">
+                <img id="qr-img" style="width:140px;height:140px;border:4px solid #fff;" alt="WireGuard QR code">
+                <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;line-height:1.6;">Scan with WireGuard app</div>
+                <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="downloadConfig()">Download Config File</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- WireGuard status -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">WireGuard Status</span><span class="badge badge-g" id="vpn-status-badge">Checking</span></div>
+        <div class="vpn-wrap">
+          <div class="vpn-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+          <div>
+            <div class="vpn-name" id="vpn2-name">—</div>
+            <div class="vpn-detail" id="vpn2-detail" style="margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+
     </div>`);
   HB._wgConfig = null;
   const v = await api('/api/v1/vpn/status');
