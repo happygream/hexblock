@@ -8,6 +8,23 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.3.0] — 2026-06-12
+### Added
+- Blocklist edit — name, URL and category editable via pencil icon in dashboard
+- PUT /api/v1/blocklists/{id} endpoint for editing blocklists
+- AdGuard format parser (`||domain^`) — AdGuard DNS filter and EasyPrivacy now supported
+- dnsmasq format parser (`address=/domain/`) support in blocklist parser
+
+### Changed
+- apply_all_active() now runs via asyncio.create_task — add, sync, toggle and delete all return instantly
+- Switched from two address= lines per domain to single `address=/domain/#` — output file 50% smaller
+- Removed sorted() from domain merge — significant speed improvement on 2M+ domain sets
+- Delete and toggle backgrounded via run_in_executor
+
+### Fixed
+- Blocklist sync no longer blocks the UI while rebuilding dnsmasq config
+
+---
 ## [1.2.2] — 2026-06-02
 
 ### Added
