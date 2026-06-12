@@ -33,3 +33,6 @@ build/
 .DS_Store
 Thumbs.db
 .env
+wireguard/
+dashboard.js
+dashboard.js.bak

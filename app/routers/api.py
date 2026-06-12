@@ -262,7 +262,7 @@ async def add_blocklist(
                     (len(domains), bid),
                 )
                 await db.commit()
-            await BlocklistService.apply_all_active()
+            asyncio.create_task(BlocklistService.apply_all_active())
         except Exception as e:
             import logging
             logging.getLogger("hexblock.blocklists").error("Background fetch failed: %s", e)
@@ -320,7 +320,7 @@ async def upload_blocklist(
                     (len(domains), bid),
                 )
                 await db.commit()
-            await BlocklistService.apply_all_active()
+            asyncio.create_task(BlocklistService.apply_all_active())
         except Exception as e:
             import logging
             logging.getLogger("hexblock.blocklists").error("Background parse failed: %s", e)
@@ -341,6 +341,19 @@ async def delete_blocklist(request: Request, bl_id: int):
     await BlocklistService.delete(bl_id)
     return {"status": "deleted"}
 
+
+@router.put("/blocklists/{bl_id}")
+async def edit_blocklist(request: Request, bl_id: int):
+    await require_auth(request)
+    body = await request.json()
+    name     = body.get("name", "").strip()
+    url      = body.get("url", "").strip()
+    category = body.get("category", "CUSTOM").strip().upper()
+    if not name:
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "Name required"}, status_code=400)
+    await BlocklistService.edit(bl_id, name, url, category)
+    return {"status": "updated"}
 
 @router.post("/blocklists/sync")
 async def sync_blocklists(request: Request):
@@ -371,7 +384,7 @@ async def add_rule(request: Request, rule: RuleCreate):
         )
         rule_id = cur.lastrowid
         await db.commit()
-    await BlocklistService.apply_all_active()
+    asyncio.create_task(BlocklistService.apply_all_active())
     return {"id": rule_id, "status": "added"}
 
 
@@ -381,7 +394,7 @@ async def delete_rule(request: Request, rule_id: int):
     async with aiosqlite.connect(settings.db_path) as db:
         await db.execute("DELETE FROM rules WHERE id = ?", (rule_id,))
         await db.commit()
-    await BlocklistService.apply_all_active()
+    asyncio.create_task(BlocklistService.apply_all_active())
     return {"status": "deleted"}
 
 

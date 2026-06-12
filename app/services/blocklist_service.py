@@ -41,6 +41,19 @@ class BlocklistService:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
+            # AdGuard format: ||domain^
+            if line.startswith('||') and line.endswith('^'):
+                d = line[2:-1].lower()
+                if d and '/' not in d:
+                    domains.append(d)
+                continue
+            # dnsmasq format: address=/domain/0.0.0.0
+            m = re.match(r'^address=/([^/]+)/', line)
+            if m:
+                d = m.group(1).lower()
+                if d:
+                    domains.append(d)
+                continue
             # hosts format
             m = re.match(r'^(?:0\.0\.0\.0|127\.0\.0\.1)\s+(\S+)', line)
             if m:
@@ -129,6 +142,16 @@ class BlocklistService:
         await BlocklistService.apply_all_active()
 
     @staticmethod
+    async def edit(bl_id: int, name: str, url: str, category: str):
+        """Update blocklist name, URL and category."""
+        async with aiosqlite.connect(settings.db_path) as db:
+            await db.execute(
+                "UPDATE blocklists SET name = ?, source_url = ?, category = ? WHERE id = ?",
+                (name, url, category, bl_id)
+            )
+            await db.commit()
+
+    @staticmethod
     async def delete(bl_id: int):
         async with aiosqlite.connect(settings.db_path) as db:
             await db.execute("DELETE FROM blocklists WHERE id = ?", (bl_id,))
@@ -136,7 +159,9 @@ class BlocklistService:
         path = HOSTS_DIR / f"list_{bl_id}.txt"
         if path.exists():
             path.unlink()
-        await BlocklistService.apply_all_active()
+        import asyncio, concurrent.futures
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, lambda: asyncio.run(BlocklistService.apply_all_active()))
 
     @staticmethod
     async def update_all():
@@ -208,12 +233,11 @@ class BlocklistService:
 
         # Write dnsmasq-format hosts file
         DNSMASQ_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-        lines = [f"address=/{d}/0.0.0.0\naddress=/{d}/::" for d in sorted(all_domains)]
-        DNSMASQ_OUTPUT.write_text(
-            "# HexBlock — generated file, do not edit manually\n"
-            + "\n".join(lines)
-            + "\n"
-        )
+        lines = [f"address=/{d}/#" for d in all_domains]
+        DNSMASQ_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        with DNSMASQ_OUTPUT.open('w') as fh:
+            fh.write("# HexBlock — generated file, do not edit manually\n")
+            fh.writelines(l + "\n" for l in lines)
 
         logger.info(
             "Applied %d blocked domains to dnsmasq (%d lists)",

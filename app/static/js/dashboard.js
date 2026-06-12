@@ -367,6 +367,9 @@ async function loadBl() {
         <div class="bl-updated">${esc(b.last_updated || '—')}</div>
         <div class="bl-actions">
           <button class="mtog ${b.enabled ? '' : 'off'}" onclick="toggleBl(${b.id},${!b.enabled})"></button>
+          <div class="icon-btn" onclick="editBl(${b.id},'${esc(b.name)}','${esc(b.source_url||'')}','${esc(b.category)}')" title="Edit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
           <div class="icon-btn" onclick="deleteBl(${b.id})">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
           </div>
@@ -385,6 +388,67 @@ async function deleteBl(id) {
   await api(`/api/v1/blocklists/${id}`, {method:'DELETE'});
   toast(_t('bl_removed_msg'));
   loadBl();
+}
+function editBl(id, name, url, cat) {
+  const ex = document.getElementById('bl-edit-modal');
+  if (ex) ex.remove();
+  const cats = ['Ads','Trackers','Malware','Telemetry','Social','Adult','Custom'];
+  const optHtml = cats.map(function(o){ return '<option value="' + o + '"' + (o === cat ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+  const overlay = document.createElement('div');
+  overlay.id = 'bl-edit-modal';
+  overlay.className = 'drawer-overlay open';
+  const drawer = document.createElement('div');
+  drawer.className = 'drawer open';
+  drawer.innerHTML =
+    '<div class="drawer-head">Edit Blocklist' +
+      '<button class="icon-btn" id="bl-edit-close">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+      '</button>' +
+    '</div>' +
+    '<div class="drawer-body">' +
+      '<div class="form-group">' +
+        '<label class="form-label">Name</label>' +
+        '<input id="bl-edit-name" class="form-input" type="text" value="' + name.replace(/"/g, '&quot;') + '">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">URL</label>' +
+        '<input id="bl-edit-url" class="form-input" type="url" value="' + url.replace(/"/g, '&quot;') + '">' +
+      '</div>' +
+      '<div class="form-group">' +
+        '<label class="form-label">Category</label>' +
+        '<select id="bl-edit-cat" class="form-input">' + optHtml + '</select>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px;">' +
+        '<button class="btn btn-primary" id="bl-edit-save">Save changes</button>' +
+        '<button class="btn btn-ghost" id="bl-edit-cancel">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  overlay.appendChild(drawer);
+  document.body.appendChild(overlay);
+  document.getElementById('bl-edit-close').onclick = function(){ overlay.remove(); };
+  document.getElementById('bl-edit-cancel').onclick = function(){ overlay.remove(); };
+  document.getElementById('bl-edit-save').onclick = function(){ saveEditBl(id); };
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.remove(); });
+  drawer.addEventListener('click', function(e){ e.stopPropagation(); });
+}
+async function saveEditBl(id) {
+  const name = document.getElementById('bl-edit-name').value.trim();
+  const url  = document.getElementById('bl-edit-url').value.trim();
+  const cat  = document.getElementById('bl-edit-cat').value;
+  if (!name) { toast('Name is required'); return; }
+  try {
+    const resp = await fetch('/api/v1/blocklists/' + id, {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: name, url: url, category: cat})
+    });
+    if (!resp.ok) throw new Error(resp.status);
+    const ex = document.getElementById('bl-edit-modal');
+    if (ex) ex.remove();
+    toast('Blocklist updated');
+    loadBl();
+  } catch(e) { toast('Failed to update: ' + e.message); }
 }
 
 function loadPreset(name, cat, url) {
