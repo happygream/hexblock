@@ -17,7 +17,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from config import settings
 from database import init_db
-from routers import auth, dashboard, blocklists, devices, vpn, rules, security
+from routers import auth, dashboard, blocklists, devices, vpn, rules, security, dns_records
 from routers import settings as settings_router
 from routers import api
 from services.blocklist_service import BlocklistService
@@ -181,6 +181,7 @@ app.include_router(blocklists.router)
 app.include_router(devices.router)
 app.include_router(vpn.router)
 app.include_router(rules.router)
+app.include_router(dns_records.router)
 app.include_router(security.router)
 app.include_router(settings_router.router)
 app.include_router(api.router, prefix="/api/v1")

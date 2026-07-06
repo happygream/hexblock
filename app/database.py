@@ -95,6 +95,28 @@ async def init_db():
             )
         """)
 
+        # ── DNS Records ─────────────────────────────────────
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS dns_records (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                hostname    TEXT NOT NULL UNIQUE,
+                ip_address  TEXT NOT NULL,
+                note        TEXT,
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+            )
+        """)
+
+        # ── DNS Records ─────────────────────────────────────
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS dns_records (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                hostname    TEXT NOT NULL UNIQUE,
+                ip_address  TEXT NOT NULL,
+                note        TEXT,
+                created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+            )
+        """)
+
         # ── Devices ─────────────────────────────────────────
         await db.execute("""
             CREATE TABLE IF NOT EXISTS devices (

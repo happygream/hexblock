@@ -4,7 +4,9 @@ All endpoints require a valid session cookie.
 """
 
 import asyncio
+import logging
 import json
+import re
 import aiosqlite
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -13,7 +15,7 @@ from config import settings
 from services.auth_service import AuthService
 from services.blocklist_service import BlocklistService
 from services.wireguard_service import WireGuardService
-from models.schemas import RuleCreate, DeviceCreate, SettingsUpdate
+from models.schemas import RuleCreate, DeviceCreate, SettingsUpdate, DnsRecordCreate
 
 router = APIRouter(tags=["api"])
 
@@ -395,6 +397,150 @@ async def delete_rule(request: Request, rule_id: int):
         await db.execute("DELETE FROM rules WHERE id = ?", (rule_id,))
         await db.commit()
     asyncio.create_task(BlocklistService.apply_all_active())
+    return {"status": "deleted"}
+
+
+# ── DNS Records ──────────────────────────────────────────────────
+
+import ipaddress as _ipaddress
+from pathlib import Path as _Path
+
+_HOSTNAME_RE = re.compile(
+    r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)"
+    r"(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*$"
+)
+
+def _valid_hostname(name: str) -> bool:
+    return bool(_HOSTNAME_RE.match(name))
+
+def _valid_ip(ip: str) -> bool:
+    try:
+        _ipaddress.ip_address(ip)
+        return True
+    except ValueError:
+        return False
+
+async def _rebuild_local_hosts():
+    """Full rebuild of local-hosts.conf from the dns_records table,
+    always using validated host-record= syntax so a malformed line
+    can never reach dnsmasq again."""
+    async with aiosqlite.connect(settings.db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT hostname, ip_address FROM dns_records ORDER BY hostname")
+        rows = await cur.fetchall()
+
+    out = _Path(settings.local_hosts_file)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# HexBlock — generated file, do not edit manually"]
+    lines += [f"host-record={r['hostname']},{r['ip_address']}" for r in rows]
+    out.write_text("\n".join(lines) + "\n")
+    logger.info("Rebuilt local-hosts.conf — %d records", len(rows))
+    BlocklistService._reload_dnsmasq()
+
+
+@router.get("/dns-records")
+async def list_dns_records(request: Request):
+    await require_auth(request)
+    async with aiosqlite.connect(settings.db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM dns_records ORDER BY created_at DESC")
+        rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+@router.post("/dns-records")
+async def add_dns_record(request: Request, record: DnsRecordCreate):
+    await require_auth(request)
+    hostname = record.hostname.strip().lower()
+    ip = record.ip_address.strip()
+
+    if not _valid_hostname(hostname):
+        raise HTTPException(status_code=400, detail="Invalid hostname")
+    if not _valid_ip(ip):
+        raise HTTPException(status_code=400, detail="Invalid IP address")
+
+    async with aiosqlite.connect(settings.db_path) as db:
+        try:
+            cur = await db.execute(
+                "INSERT INTO dns_records (hostname, ip_address, note) VALUES (?, ?, ?)",
+                (hostname, ip, record.note),
+            )
+        except aiosqlite.IntegrityError:
+            raise HTTPException(status_code=409, detail="Hostname already exists")
+        record_id = cur.lastrowid
+        await db.commit()
+
+    await _rebuild_local_hosts()
+    return {"id": record_id, "status": "added"}
+
+
+@router.delete("/dns-records/{record_id}")
+async def delete_dns_record(request: Request, record_id: int):
+    await require_auth(request)
+    async with aiosqlite.connect(settings.db_path) as db:
+        await db.execute("DELETE FROM dns_records WHERE id = ?", (record_id,))
+        await db.commit()
+    await _rebuild_local_hosts()
+    return {"status": "deleted"}
+
+
+# ── DNS Records ──────────────────────────────────────────────────
+
+from pathlib import Path as _Path
+
+async def _rebuild_local_hosts():
+    """Full rebuild of local-hosts.conf from the dns_records table,
+    always using validated host-record= syntax so a malformed line
+    can never reach dnsmasq again."""
+    async with aiosqlite.connect(settings.db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT hostname, ip_address FROM dns_records ORDER BY hostname")
+        rows = await cur.fetchall()
+
+    out = _Path(settings.local_hosts_file)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["# HexBlock — generated file, do not edit manually"]
+    lines += [f"host-record={r['hostname']},{r['ip_address']}" for r in rows]
+    out.write_text("\n".join(lines) + "\n")
+    logging.getLogger("hexblock.dns").info("Rebuilt local-hosts.conf — %d records", len(rows))
+    BlocklistService._reload_dnsmasq()
+
+
+@router.get("/dns-records")
+async def list_dns_records(request: Request):
+    await require_auth(request)
+    async with aiosqlite.connect(settings.db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cur = await db.execute("SELECT * FROM dns_records ORDER BY created_at DESC")
+        rows = await cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+@router.post("/dns-records")
+async def add_dns_record(request: Request, record: DnsRecordCreate):
+    await require_auth(request)
+    async with aiosqlite.connect(settings.db_path) as db:
+        try:
+            cur = await db.execute(
+                "INSERT INTO dns_records (hostname, ip_address, note) VALUES (?, ?, ?)",
+                (record.hostname, record.ip_address, record.note),
+            )
+        except aiosqlite.IntegrityError:
+            raise HTTPException(status_code=409, detail="Hostname already exists")
+        record_id = cur.lastrowid
+        await db.commit()
+
+    await _rebuild_local_hosts()
+    return {"id": record_id, "status": "added"}
+
+
+@router.delete("/dns-records/{record_id}")
+async def delete_dns_record(request: Request, record_id: int):
+    await require_auth(request)
+    async with aiosqlite.connect(settings.db_path) as db:
+        await db.execute("DELETE FROM dns_records WHERE id = ?", (record_id,))
+        await db.commit()
+    await _rebuild_local_hosts()
     return {"status": "deleted"}
 
 

@@ -26,6 +26,7 @@ const TRANSLATIONS = {
     nav_dashboard:    'Dashboard',
     nav_blocklists:   'Blocklists',
     nav_rules:        'Custom Rules',
+    nav_dns_records:  'Local DNS Records',
     nav_devices:      'Devices',
     nav_vpn:          'VPN / WireGuard',
     nav_query_log:    'Query Log',
@@ -222,7 +223,7 @@ const TRANSLATIONS = {
   },
 
   fr: {
-    nav_dashboard:'Tableau de bord',nav_blocklists:'Listes de blocage',nav_rules:'Règles personnalisées',nav_devices:'Appareils',nav_vpn:'VPN / WireGuard',nav_query_log:'Journal de requêtes',nav_security:'Sécurité',nav_settings:'Paramètres',nav_logout:'Déconnexion',
+    nav_dashboard:'Tableau de bord',nav_blocklists:'Listes de blocage',nav_rules:'Règles personnalisées',nav_dns_records:'Enregistrements DNS locaux',nav_devices:'Appareils',nav_vpn:'VPN / WireGuard',nav_query_log:'Journal de requêtes',nav_security:'Sécurité',nav_settings:'Paramètres',nav_logout:'Déconnexion',
     dash_title:'Tableau de bord',dash_queries:'Requêtes aujourd\'hui',dash_blocked:'Bloqués aujourd\'hui',dash_block_rate:'Taux de blocage',dash_active_lists:'Listes actives',dash_domains:'Domaines bloqués',dash_devices:'Appareils',dash_vpn_status:'Statut VPN',dash_uptime:'Disponibilité',dash_recent_log:'Requêtes récentes',dash_audit:'Journal d\'audit',
     bl_title:'Listes de blocage',bl_add:'Ajouter une liste',bl_sync:'Synchroniser tout',bl_name:'Nom',bl_source:'Source',bl_domains:'Domaines',bl_updated:'Dernière mise à jour',bl_enabled:'Activé',bl_empty:'Aucune liste ajoutée',bl_enter_name:'Nom de la liste',bl_preset_loaded:'Préréglage chargé — cliquez sur Ajouter',bl_enabled_msg:'Liste activée',bl_disabled_msg:'Liste désactivée',bl_removed_msg:'Liste supprimée',bl_synced_msg:'Listes synchronisées',bl_syncing:'Synchronisation...',bl_parsed:'Analysé',bl_domains_suffix:'domaines',
     rules_title:'Règles personnalisées',rules_add:'Ajouter une règle',rules_domain:'Domaine',rules_action:'Action',rules_allow:'Autoriser',rules_block:'Bloquer',rules_empty:'Aucune règle définie',rules_added:'Règle ajoutée',rules_removed:'Règle supprimée',
@@ -239,7 +240,7 @@ const TRANSLATIONS = {
   },
 
   de: {
-    nav_dashboard:'Dashboard',nav_blocklists:'Blocklisten',nav_rules:'Benutzerdefinierte Regeln',nav_devices:'Geräte',nav_vpn:'VPN / WireGuard',nav_query_log:'Abfrageprotokoll',nav_security:'Sicherheit',nav_settings:'Einstellungen',nav_logout:'Abmelden',
+    nav_dashboard:'Dashboard',nav_blocklists:'Blocklisten',nav_rules:'Benutzerdefinierte Regeln',nav_dns_records:'Lokale DNS-Einträge',nav_devices:'Geräte',nav_vpn:'VPN / WireGuard',nav_query_log:'Abfrageprotokoll',nav_security:'Sicherheit',nav_settings:'Einstellungen',nav_logout:'Abmelden',
     dash_title:'Dashboard',dash_queries:'Abfragen heute',dash_blocked:'Heute blockiert',dash_block_rate:'Blockierungsrate',dash_active_lists:'Aktive Listen',dash_domains:'Blockierte Domains',dash_devices:'Geräte',dash_vpn_status:'VPN-Status',dash_uptime:'Betriebszeit',dash_recent_log:'Letzte Abfragen',dash_audit:'Auditprotokoll',
     bl_title:'Blocklisten',bl_add:'Liste hinzufügen',bl_sync:'Alle synchronisieren',bl_name:'Name',bl_source:'Quelle',bl_domains:'Domains',bl_updated:'Zuletzt aktualisiert',bl_enabled:'Aktiviert',bl_empty:'Keine Listen hinzugefügt',bl_enter_name:'Listenname eingeben',bl_preset_loaded:'Voreinstellung geladen — Liste hinzufügen klicken',bl_enabled_msg:'Liste aktiviert',bl_disabled_msg:'Liste deaktiviert',bl_removed_msg:'Liste entfernt',bl_synced_msg:'Listen synchronisiert',bl_syncing:'Synchronisierung...',bl_parsed:'Analysiert',bl_domains_suffix:'Domains',
     rules_title:'Benutzerdefinierte Regeln',rules_add:'Regel hinzufügen',rules_domain:'Domain',rules_action:'Aktion',rules_allow:'Zulassen',rules_block:'Blockieren',rules_empty:'Keine Regeln definiert',rules_added:'Regel hinzugefügt',rules_removed:'Regel entfernt',
@@ -256,7 +257,7 @@ const TRANSLATIONS = {
   },
 
   es: {
-    nav_dashboard:'Panel',nav_blocklists:'Listas de bloqueo',nav_rules:'Reglas personalizadas',nav_devices:'Dispositivos',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro de consultas',nav_security:'Seguridad',nav_settings:'Configuración',nav_logout:'Cerrar sesión',
+    nav_dashboard:'Panel',nav_blocklists:'Listas de bloqueo',nav_rules:'Reglas personalizadas',nav_dns_records:'Registros DNS locales',nav_devices:'Dispositivos',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro de consultas',nav_security:'Seguridad',nav_settings:'Configuración',nav_logout:'Cerrar sesión',
     dash_title:'Panel',dash_queries:'Consultas hoy',dash_blocked:'Bloqueados hoy',dash_block_rate:'Tasa de bloqueo',dash_active_lists:'Listas activas',dash_domains:'Dominios bloqueados',dash_devices:'Dispositivos',dash_vpn_status:'Estado VPN',dash_uptime:'Tiempo activo',dash_recent_log:'Consultas recientes',dash_audit:'Registro de auditoría',
     bl_title:'Listas de bloqueo',bl_add:'Añadir lista',bl_sync:'Sincronizar todo',bl_name:'Nombre',bl_source:'Fuente',bl_domains:'Dominios',bl_updated:'Última actualización',bl_enabled:'Activado',bl_empty:'No hay listas añadidas',bl_enter_name:'Nombre de la lista',bl_preset_loaded:'Preajuste cargado — haz clic en Añadir',bl_enabled_msg:'Lista activada',bl_disabled_msg:'Lista desactivada',bl_removed_msg:'Lista eliminada',bl_synced_msg:'Listas sincronizadas',bl_syncing:'Sincronizando...',bl_parsed:'Analizado',bl_domains_suffix:'dominios',
     rules_title:'Reglas personalizadas',rules_add:'Añadir regla',rules_domain:'Dominio',rules_action:'Acción',rules_allow:'Permitir',rules_block:'Bloquear',rules_empty:'No hay reglas definidas',rules_added:'Regla añadida',rules_removed:'Regla eliminada',
@@ -273,7 +274,7 @@ const TRANSLATIONS = {
   },
 
   it: {
-    nav_dashboard:'Pannello',nav_blocklists:'Liste di blocco',nav_rules:'Regole personalizzate',nav_devices:'Dispositivi',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro query',nav_security:'Sicurezza',nav_settings:'Impostazioni',nav_logout:'Esci',
+    nav_dashboard:'Pannello',nav_blocklists:'Liste di blocco',nav_rules:'Regole personalizzate',nav_dns_records:'Record DNS locali',nav_devices:'Dispositivi',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro query',nav_security:'Sicurezza',nav_settings:'Impostazioni',nav_logout:'Esci',
     dash_title:'Pannello',dash_queries:'Query oggi',dash_blocked:'Bloccati oggi',dash_block_rate:'Tasso di blocco',dash_active_lists:'Liste attive',dash_domains:'Domini bloccati',dash_devices:'Dispositivi',dash_vpn_status:'Stato VPN',dash_uptime:'Disponibilità',dash_recent_log:'Query recenti',dash_audit:'Registro di audit',
     bl_title:'Liste di blocco',bl_add:'Aggiungi lista',bl_sync:'Sincronizza tutto',bl_name:'Nome',bl_source:'Fonte',bl_domains:'Domini',bl_updated:'Ultimo aggiornamento',bl_enabled:'Abilitato',bl_empty:'Nessuna lista aggiunta',bl_enter_name:'Nome della lista',bl_preset_loaded:'Preset caricato — clicca Aggiungi',bl_enabled_msg:'Lista abilitata',bl_disabled_msg:'Lista disabilitata',bl_removed_msg:'Lista rimossa',bl_synced_msg:'Liste sincronizzate',bl_syncing:'Sincronizzazione...',bl_parsed:'Analizzato',bl_domains_suffix:'domini',
     rules_title:'Regole personalizzate',rules_add:'Aggiungi regola',rules_domain:'Dominio',rules_action:'Azione',rules_allow:'Consenti',rules_block:'Blocca',rules_empty:'Nessuna regola definita',rules_added:'Regola aggiunta',rules_removed:'Regola rimossa',
@@ -290,7 +291,7 @@ const TRANSLATIONS = {
   },
 
   pt: {
-    nav_dashboard:'Painel',nav_blocklists:'Listas de bloqueio',nav_rules:'Regras personalizadas',nav_devices:'Dispositivos',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro de consultas',nav_security:'Segurança',nav_settings:'Configurações',nav_logout:'Sair',
+    nav_dashboard:'Painel',nav_blocklists:'Listas de bloqueio',nav_rules:'Regras personalizadas',nav_dns_records:'Registros DNS locais',nav_devices:'Dispositivos',nav_vpn:'VPN / WireGuard',nav_query_log:'Registro de consultas',nav_security:'Segurança',nav_settings:'Configurações',nav_logout:'Sair',
     dash_title:'Painel',dash_queries:'Consultas hoje',dash_blocked:'Bloqueados hoje',dash_block_rate:'Taxa de bloqueio',dash_active_lists:'Listas ativas',dash_domains:'Domínios bloqueados',dash_devices:'Dispositivos',dash_vpn_status:'Status VPN',dash_uptime:'Tempo de atividade',dash_recent_log:'Consultas recentes',dash_audit:'Registro de auditoria',
     bl_title:'Listas de bloqueio',bl_add:'Adicionar lista',bl_sync:'Sincronizar tudo',bl_name:'Nome',bl_source:'Fonte',bl_domains:'Domínios',bl_updated:'Última atualização',bl_enabled:'Habilitado',bl_empty:'Nenhuma lista adicionada',bl_enter_name:'Nome da lista',bl_preset_loaded:'Predefinição carregada — clique em Adicionar',bl_enabled_msg:'Lista habilitada',bl_disabled_msg:'Lista desabilitada',bl_removed_msg:'Lista removida',bl_synced_msg:'Listas sincronizadas',bl_syncing:'Sincronizando...',bl_parsed:'Analisado',bl_domains_suffix:'domínios',
     rules_title:'Regras personalizadas',rules_add:'Adicionar regra',rules_domain:'Domínio',rules_action:'Ação',rules_allow:'Permitir',rules_block:'Bloquear',rules_empty:'Nenhuma regra definida',rules_added:'Regra adicionada',rules_removed:'Regra removida',
@@ -307,7 +308,7 @@ const TRANSLATIONS = {
   },
 
   nl: {
-    nav_dashboard:'Dashboard',nav_blocklists:'Blokkeringslijsten',nav_rules:'Aangepaste regels',nav_devices:'Apparaten',nav_vpn:'VPN / WireGuard',nav_query_log:'Querylogboek',nav_security:'Beveiliging',nav_settings:'Instellingen',nav_logout:'Afmelden',
+    nav_dashboard:'Dashboard',nav_blocklists:'Blokkeringslijsten',nav_rules:'Aangepaste regels',nav_dns_records:'Lokale DNS-records',nav_devices:'Apparaten',nav_vpn:'VPN / WireGuard',nav_query_log:'Querylogboek',nav_security:'Beveiliging',nav_settings:'Instellingen',nav_logout:'Afmelden',
     dash_title:'Dashboard',dash_queries:'Queries vandaag',dash_blocked:'Geblokkeerd vandaag',dash_block_rate:'Blokkeringspercentage',dash_active_lists:'Actieve lijsten',dash_domains:'Geblokkeerde domeinen',dash_devices:'Apparaten',dash_vpn_status:'VPN-status',dash_uptime:'Uptime',dash_recent_log:'Recente queries',dash_audit:'Auditlogboek',
     bl_title:'Blokkeringslijsten',bl_add:'Lijst toevoegen',bl_sync:'Alles synchroniseren',bl_name:'Naam',bl_source:'Bron',bl_domains:'Domeinen',bl_updated:'Laatst bijgewerkt',bl_enabled:'Ingeschakeld',bl_empty:'Geen lijsten toegevoegd',bl_enter_name:'Lijstnaam invoeren',bl_preset_loaded:'Voorinstelling geladen — klik op Toevoegen',bl_enabled_msg:'Lijst ingeschakeld',bl_disabled_msg:'Lijst uitgeschakeld',bl_removed_msg:'Lijst verwijderd',bl_synced_msg:'Lijsten gesynchroniseerd',bl_syncing:'Synchroniseren...',bl_parsed:'Geanalyseerd',bl_domains_suffix:'domeinen',
     rules_title:'Aangepaste regels',rules_add:'Regel toevoegen',rules_domain:'Domein',rules_action:'Actie',rules_allow:'Toestaan',rules_block:'Blokkeren',rules_empty:'Geen regels gedefinieerd',rules_added:'Regel toegevoegd',rules_removed:'Regel verwijderd',
@@ -324,7 +325,7 @@ const TRANSLATIONS = {
   },
 
   pl: {
-    nav_dashboard:'Panel',nav_blocklists:'Listy blokowania',nav_rules:'Reguły własne',nav_devices:'Urządzenia',nav_vpn:'VPN / WireGuard',nav_query_log:'Dziennik zapytań',nav_security:'Bezpieczeństwo',nav_settings:'Ustawienia',nav_logout:'Wyloguj',
+    nav_dashboard:'Panel',nav_blocklists:'Listy blokowania',nav_rules:'Reguły własne',nav_dns_records:'Lokalne rekordy DNS',nav_devices:'Urządzenia',nav_vpn:'VPN / WireGuard',nav_query_log:'Dziennik zapytań',nav_security:'Bezpieczeństwo',nav_settings:'Ustawienia',nav_logout:'Wyloguj',
     dash_title:'Panel',dash_queries:'Zapytania dzisiaj',dash_blocked:'Zablokowane dzisiaj',dash_block_rate:'Wskaźnik blokowania',dash_active_lists:'Aktywne listy',dash_domains:'Zablokowane domeny',dash_devices:'Urządzenia',dash_vpn_status:'Status VPN',dash_uptime:'Czas pracy',dash_recent_log:'Ostatnie zapytania',dash_audit:'Dziennik audytu',
     bl_title:'Listy blokowania',bl_add:'Dodaj listę',bl_sync:'Synchronizuj wszystko',bl_name:'Nazwa',bl_source:'Źródło',bl_domains:'Domeny',bl_updated:'Ostatnia aktualizacja',bl_enabled:'Włączono',bl_empty:'Brak dodanych list',bl_enter_name:'Nazwa listy',bl_preset_loaded:'Preset załadowany — kliknij Dodaj',bl_enabled_msg:'Lista włączona',bl_disabled_msg:'Lista wyłączona',bl_removed_msg:'Lista usunięta',bl_synced_msg:'Listy zsynchronizowane',bl_syncing:'Synchronizowanie...',bl_parsed:'Przeanalizowano',bl_domains_suffix:'domen',
     rules_title:'Reguły własne',rules_add:'Dodaj regułę',rules_domain:'Domena',rules_action:'Akcja',rules_allow:'Zezwól',rules_block:'Blokuj',rules_empty:'Brak zdefiniowanych reguł',rules_added:'Reguła dodana',rules_removed:'Reguła usunięta',
@@ -341,7 +342,7 @@ const TRANSLATIONS = {
   },
 
   ja: {
-    nav_dashboard:'ダッシュボード',nav_blocklists:'ブロックリスト',nav_rules:'カスタムルール',nav_devices:'デバイス',nav_vpn:'VPN / WireGuard',nav_query_log:'クエリログ',nav_security:'セキュリティ',nav_settings:'設定',nav_logout:'サインアウト',
+    nav_dashboard:'ダッシュボード',nav_blocklists:'ブロックリスト',nav_rules:'カスタムルール',nav_dns_records:'ローカルDNSレコード',nav_devices:'デバイス',nav_vpn:'VPN / WireGuard',nav_query_log:'クエリログ',nav_security:'セキュリティ',nav_settings:'設定',nav_logout:'サインアウト',
     dash_title:'ダッシュボード',dash_queries:'本日のクエリ',dash_blocked:'本日のブロック数',dash_block_rate:'ブロック率',dash_active_lists:'有効なリスト',dash_domains:'ブロックされたドメイン',dash_devices:'デバイス',dash_vpn_status:'VPNステータス',dash_uptime:'稼働時間',dash_recent_log:'最近のクエリ',dash_audit:'監査ログ',
     bl_title:'ブロックリスト',bl_add:'リストを追加',bl_sync:'すべて同期',bl_name:'名前',bl_source:'ソース',bl_domains:'ドメイン',bl_updated:'最終更新',bl_enabled:'有効',bl_empty:'リストが追加されていません',bl_enter_name:'リスト名を入力',bl_preset_loaded:'プリセットを読み込みました — 追加をクリック',bl_enabled_msg:'リストを有効にしました',bl_disabled_msg:'リストを無効にしました',bl_removed_msg:'リストを削除しました',bl_synced_msg:'リストを同期しました',bl_syncing:'同期中...',bl_parsed:'解析済み',bl_domains_suffix:'ドメイン',
     rules_title:'カスタムルール',rules_add:'ルールを追加',rules_domain:'ドメイン',rules_action:'アクション',rules_allow:'許可',rules_block:'ブロック',rules_empty:'ルールが定義されていません',rules_added:'ルールを追加しました',rules_removed:'ルールを削除しました',
@@ -358,7 +359,7 @@ const TRANSLATIONS = {
   },
 
   zh: {
-    nav_dashboard:'仪表盘',nav_blocklists:'拦截列表',nav_rules:'自定义规则',nav_devices:'设备',nav_vpn:'VPN / WireGuard',nav_query_log:'查询日志',nav_security:'安全',nav_settings:'设置',nav_logout:'退出登录',
+    nav_dashboard:'仪表盘',nav_blocklists:'拦截列表',nav_rules:'自定义规则',nav_dns_records:'本地DNS记录',nav_devices:'设备',nav_vpn:'VPN / WireGuard',nav_query_log:'查询日志',nav_security:'安全',nav_settings:'设置',nav_logout:'退出登录',
     dash_title:'仪表盘',dash_queries:'今日查询',dash_blocked:'今日拦截',dash_block_rate:'拦截率',dash_active_lists:'启用列表',dash_domains:'已拦截域名',dash_devices:'设备',dash_vpn_status:'VPN状态',dash_uptime:'运行时间',dash_recent_log:'最近查询',dash_audit:'审计日志',
     bl_title:'拦截列表',bl_add:'添加列表',bl_sync:'同步全部',bl_name:'名称',bl_source:'来源',bl_domains:'域名',bl_updated:'最后更新',bl_enabled:'已启用',bl_empty:'尚未添加列表',bl_enter_name:'输入列表名称',bl_preset_loaded:'预设已加载 — 点击添加',bl_enabled_msg:'列表已启用',bl_disabled_msg:'列表已禁用',bl_removed_msg:'列表已删除',bl_synced_msg:'列表已同步',bl_syncing:'同步中...',bl_parsed:'已解析',bl_domains_suffix:'个域名',
     rules_title:'自定义规则',rules_add:'添加规则',rules_domain:'域名',rules_action:'操作',rules_allow:'允许',rules_block:'拦截',rules_empty:'暂无规则',rules_added:'规则已添加',rules_removed:'规则已删除',

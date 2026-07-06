@@ -92,6 +92,31 @@ class BlocklistResponse(BaseModel):
 
 # ── Rules ─────────────────────────────────────────────────────
 
+class DnsRecordCreate(BaseModel):
+    hostname: str
+    ip_address: str
+    note:     Optional[str] = None
+
+    @field_validator("hostname")
+    @classmethod
+    def hostname_valid(cls, v):
+        v = v.strip().lower()
+        if not re.match(r'^(?=.{1,253}$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*$', v):
+            raise ValueError("Invalid hostname format")
+        return v
+
+    @field_validator("ip_address")
+    @classmethod
+    def ip_valid(cls, v):
+        import ipaddress
+        v = v.strip()
+        try:
+            ipaddress.ip_address(v)
+        except ValueError:
+            raise ValueError("Invalid IP address")
+        return v
+
+
 class RuleCreate(BaseModel):
     domain:    str
     rule_type: str

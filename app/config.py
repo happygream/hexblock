@@ -47,6 +47,12 @@ class Settings(BaseSettings):
     dnsmasq_reload_cmd: str = Field(
         "docker exec hexblock-dns killall -HUP dnsmasq", alias="DNSMASQ_RELOAD_CMD"
     )
+    local_hosts_file: str = Field(
+        "/etc/dnsmasq.d/local-hosts.conf", alias="LOCAL_HOSTS_FILE"
+    )
+    local_hosts_file: str = Field(
+        "/etc/dnsmasq.d/local-hosts.conf", alias="LOCAL_HOSTS_FILE"
+    )
 
     # WireGuard
     wg_config_dir: str = Field("/etc/wireguard", alias="WG_CONFIG_DIR")

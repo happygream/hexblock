@@ -15,6 +15,7 @@ function PAGE_TITLES(id) {
     querylog:   'nav_query_log',
     blocklists: 'nav_blocklists',
     rules:      'nav_rules',
+    'dns-records': 'nav_dns_records',
     vpn:        'nav_vpn',
     devices:    'nav_devices',
     security:   'nav_security',
@@ -57,6 +58,7 @@ function renderPage(id) {
     case 'querylog':   renderQueryLog();   break;
     case 'blocklists': renderBlocklists(); break;
     case 'rules':      renderRules();      break;
+    case 'dns-records': renderDNSRecords(); break;
     case 'vpn':        renderVPN();        break;
     case 'devices':    renderDevices();    break;
     case 'security':   renderSecurity();   break;
@@ -563,6 +565,59 @@ async function deleteRule(id) {
   await api(`/api/v1/rules/${id}`, {method:'DELETE'});
   toast(_t('rules_removed'));
   loadRules();
+}
+
+// ── DNS Records ──────────────────────────────────────────────
+async function renderDNSRecords() {
+  setContent(`
+    <div style="animation:pagein 0.2s ease both;display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Local DNS Records</span></div>
+        <div class="card-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input class="form-input" id="dns-hostname" type="text" placeholder="immich.udmzerodark.uk" style="flex:2;min-width:180px;">
+            <input class="form-input" id="dns-ip" type="text" placeholder="192.168.1.52" style="flex:1;min-width:120px;">
+            <button class="btn btn-primary btn-sm" onclick="addDNSRecord()">Add</button>
+          </div>
+          <div id="dns-records-list"></div>
+        </div>
+      </div>
+    </div>`);
+  loadDNSRecords();
+}
+
+async function loadDNSRecords() {
+  const data = await api('/api/v1/dns-records');
+  document.getElementById('dns-records-list').innerHTML = data.length
+    ? data.map(r => `
+      <div class="dev-item">
+        <span style="flex:1;font-family:var(--mono);font-size:12px;margin:0 10px;">${esc(r.hostname)} → ${esc(r.ip_address)}</span>
+        <div class="icon-btn" onclick="deleteDNSRecord(${r.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+        </div>
+      </div>`).join('')
+    : emptyState('No local DNS records yet');
+}
+
+async function addDNSRecord() {
+  const hostname = document.getElementById('dns-hostname').value.trim();
+  const ip       = document.getElementById('dns-ip').value.trim();
+  if (!hostname || !ip) return;
+  try {
+    await api('/api/v1/dns-records', {method:'POST', json:{hostname, ip_address: ip}});
+    document.getElementById('dns-hostname').value = '';
+    document.getElementById('dns-ip').value = '';
+    toast('DNS record added: ' + hostname);
+    loadDNSRecords();
+  } catch (e) {
+    toast('Failed to add record — check hostname/IP format');
+  }
+}
+
+async function deleteDNSRecord(id) {
+  await api(`/api/v1/dns-records/${id}`, {method:'DELETE'});
+  toast('DNS record removed');
+  loadDNSRecords();
 }
 
 // ── VPN ────────────────────────────────────────────────────────

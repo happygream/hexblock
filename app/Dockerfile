@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     docker.io \
+    dbus \
     wireguard-tools \
     iproute2 \
     gcc \
